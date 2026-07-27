@@ -269,3 +269,5 @@ NODE_ENV=development
 - [ ] Stats API 구현
 - [ ] Swagger 문서화
 - [ ] 테스트 작성
+- [ ] CI/CD 파이프라인 구성
+- [ ] 배포
