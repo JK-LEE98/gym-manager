@@ -22,10 +22,10 @@ export class Gym {
   @Column({ length: 100 })
   name: string;
 
-  @Column({ length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   address: string | null;
 
-  @Column({ length: 20, nullable: true })
+  @Column({ type: 'varchar', length: 20, nullable: true })
   phone: string | null;
 
   /** 서비스 이용 여부. 구독 해지 시 false → 소속 유저 로그인 차단 */

@@ -30,7 +30,7 @@ export class TrainerProfile {
   user: User;
 
   /** 전문 분야. 예: "웨이트 트레이닝, 체형교정" */
-  @Column({ length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: true })
   specialty: string | null;
 
   @Column({ type: 'text', nullable: true })

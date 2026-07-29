@@ -152,6 +152,8 @@ Claude Code, Cowork, 그 외 모든 Claude 인스턴스가 이 파일을 읽고 
 - Entity에 `@CreateDateColumn`, `@UpdateDateColumn` 기본 포함
 - Soft delete는 `@DeleteDateColumn` 사용
 - N+1 문제 방지를 위해 relation 로딩 전략 명시 (`eager` 지양, `QueryBuilder` 또는 `relations` 옵션 활용)
+- **nullable 컬럼(`T | null`)에는 `type`을 반드시 명시한다.**
+  유니온 타입은 `design:type` 메타데이터에 `Object`로 기록되어 타입 추론이 실패한다. → 트러블슈팅 003
 
 ### 보안
 - 비밀번호는 반드시 bcrypt 해싱

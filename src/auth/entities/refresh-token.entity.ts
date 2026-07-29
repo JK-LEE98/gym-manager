@@ -41,7 +41,7 @@ export class RefreshToken {
   tokenHash: string;
 
   /** User-Agent 요약. 기기 목록 표시용 */
-  @Column({ name: 'device_info', length: 255, nullable: true })
+  @Column({ name: 'device_info', type: 'varchar', length: 255, nullable: true })
   deviceInfo: string | null;
 
   @Column({ name: 'expires_at', type: 'timestamp' })
