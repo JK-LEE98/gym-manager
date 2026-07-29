@@ -174,6 +174,15 @@ Claude가 제시할 형식:
 대상은 항상 `dev`. `.github/pull_request_template.md`가 자동 적용된다.
 본문 마지막에 `Closes #N`. 범위를 벗어난 변경이 섞였으면 올리지 말고 분리한다.
 
+**제목**도 Conventional Commits 형식을 따른다. 단, **개별 커밋 메시지를 복사하지 않는다.**
+PR은 여러 커밋의 묶음이므로 제목은 *브랜치 전체의 목적*을 나타내야 한다.
+
+```
+chore(common): 공통 응답 포맷 및 전역 예외 처리 구현
+feat(auth): JWT 인증 및 Auth API 구현
+```
+`<scope>`는 브랜치의 도메인(`common` `auth` `gym` `user` `pt`)을 쓴다.
+
 ### ⑤ 정리 — 머지 후
 
 `dev` pull → 로컬 브랜치 삭제 → **Obsidian `개발 로그.md` 진행 상태 갱신.**
