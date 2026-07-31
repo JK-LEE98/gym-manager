@@ -1,7 +1,9 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -10,11 +12,17 @@ async function bootstrap() {
   // DTO에 붙인 class-validator 데코레이터를 전역으로 활성화
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,       // DTO에 없는 필드는 자동으로 제거
+      whitelist: true, // DTO에 없는 필드는 자동으로 제거
       forbidNonWhitelisted: true, // DTO에 없는 필드가 오면 400 에러
-      transform: true,       // 요청 데이터를 DTO 타입으로 자동 변환
+      transform: true, // 요청 데이터를 DTO 타입으로 자동 변환
     }),
   );
+
+  // 성공 응답 → { success, data, message } 자동 래핑
+  app.useGlobalInterceptors(new TransformInterceptor(app.get(Reflector)));
+
+  // 모든 예외 → { success, data, message, errorCode } 통일
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // Swagger 설정 (Spring의 Springdoc과 동일한 역할)
   const config = new DocumentBuilder()
