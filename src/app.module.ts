@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { RolesGuard } from './common/guards/roles.guard';
 
 @Module({
   imports: [
@@ -14,7 +18,6 @@ import { AppService } from './app.service';
     }),
 
     // Spring의 DataSource + JPA 설정 역할
-    // useFactory로 ConfigService에서 환경변수 읽어서 주입
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -30,8 +33,17 @@ import { AppService } from './app.service';
         logging: config.get('NODE_ENV') === 'development',
       }),
     }),
+
+    AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+
+    // 전역 Guard. 등록 순서가 곧 실행 순서다.
+    // JwtAuthGuard가 request.user를 채운 뒤에야 RolesGuard가 role을 읽을 수 있다.
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+  ],
 })
 export class AppModule {}
