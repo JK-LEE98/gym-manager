@@ -22,6 +22,12 @@ export enum ErrorCode {
   TENANT_MISMATCH = 'TENANT_MISMATCH',
   /** 정의되지 않은 서버 오류 */
   INTERNAL_ERROR = 'INTERNAL_ERROR',
+
+  // --- 인증 ---
+  /** 로그인 실패. 아이디 미존재와 비밀번호 불일치를 구분하지 않는다 @see ADR-008 */
+  INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
+  /** 아이디 중복 */
+  DUPLICATE_LOGIN_ID = 'DUPLICATE_LOGIN_ID',
 }
 
 /**
@@ -57,5 +63,14 @@ export const ERROR_METADATA: Record<
   [ErrorCode.INTERNAL_ERROR]: {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
     message: '서버 오류가 발생했습니다',
+  },
+  [ErrorCode.INVALID_CREDENTIALS]: {
+    status: HttpStatus.UNAUTHORIZED,
+    // 아이디 미존재와 비밀번호 불일치를 구분하지 않는다
+    message: '아이디 또는 비밀번호가 올바르지 않습니다',
+  },
+  [ErrorCode.DUPLICATE_LOGIN_ID]: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 사용 중인 아이디입니다',
   },
 };

@@ -41,9 +41,16 @@ export class User {
   @JoinColumn({ name: 'gym_id' })
   gym: Gym | null;
 
-  /** 전역 유니크. 한 계정 = 한 헬스장 */
-  @Column({ length: 100, unique: true })
-  email: string;
+  /**
+   * 로그인 아이디. 4~20자, 영문 소문자·숫자·언더스코어.
+   *
+   * 이메일을 쓰지 않는 이유: 인증 절차를 두지 않을 것이므로 검증되지 않은 이메일은 의미가 없다.
+   * 연락 수단은 phone이 담당한다. @see ADR-009
+   *
+   * 전역 유니크 — 한 계정 = 한 헬스장
+   */
+  @Column({ name: 'login_id', length: 50, unique: true })
+  loginId: string;
 
   /** bcrypt 해시. 조회 시 기본 제외 → 명시적으로 addSelect 해야 나옴 */
   @Column({ length: 255, select: false })
