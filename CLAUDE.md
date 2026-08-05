@@ -209,6 +209,8 @@ feat(auth): JWT 인증 및 Auth API 구현
 - 예외는 내장 `HttpException` 또는 커스텀 Exception
 - 비즈니스 로직은 Service에만. Controller는 얇게.
 - 트랜잭션이 필요한 로직은 반드시 명시
+- **경로 파라미터로 UUID를 받으면 `ParseUUIDPipe`를 붙인다.**
+  형식 오류가 DB까지 내려가면 PostgreSQL `22P02`로 500이 된다. 형식 오류는 400이어야 한다.
 
 ### TypeORM
 - `@CreateDateColumn`, `@UpdateDateColumn` 기본 포함. soft delete는 `@DeleteDateColumn`
