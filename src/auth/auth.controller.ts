@@ -36,7 +36,11 @@ export class AuthController {
     status: 201,
     message: '회원가입이 완료되었습니다',
   })
-  @ApiErrorResponse(409, [ErrorCode.DUPLICATE_LOGIN_ID], '이미 사용 중인 아이디')
+  @ApiErrorResponse(
+    409,
+    [ErrorCode.DUPLICATE_LOGIN_ID],
+    '이미 사용 중인 아이디',
+  )
   @ApiErrorResponse(404, [ErrorCode.GYM_NOT_FOUND], '존재하지 않는 헬스장')
   signup(@Body() dto: SignupDto): Promise<UserResponseDto> {
     return this.authService.signup(dto);

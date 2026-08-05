@@ -78,12 +78,14 @@ export class GymsService {
       where: { isActive: true },
       order: { name: 'ASC' },
     });
-    return gyms.map(PublicGymResponseDto.from);
+    // 정적 메서드를 그대로 넘기면 this 바인딩이 끊길 수 있어 lint가 경고한다.
+    // 화살표 함수로 감싸 호출 주체를 명확히 한다
+    return gyms.map((gym) => PublicGymResponseDto.from(gym));
   }
 
   async findAll(): Promise<GymResponseDto[]> {
     const gyms = await this.gymRepo.find({ order: { createdAt: 'DESC' } });
-    return gyms.map(GymResponseDto.from);
+    return gyms.map((gym) => GymResponseDto.from(gym));
   }
 
   /**

@@ -11,8 +11,17 @@ import { ERROR_METADATA, ErrorCode } from '../enums/error-code.enum';
 import { BusinessException } from '../exceptions/business.exception';
 import { ApiErrorResponse } from '../interfaces/api-response.interface';
 
-/** NestJS 내장 예외를 상태 코드로 ErrorCode에 매핑 */
-const STATUS_TO_ERROR_CODE: Partial<Record<HttpStatus, ErrorCode>> = {
+/**
+ * NestJS 내장 예외를 상태 코드로 ErrorCode에 매핑.
+ *
+ * 키 타입을 HttpStatus가 아닌 number로 둔 이유:
+ * `exception.getStatus()`가 number를 반환하므로, HttpStatus로 좁혀두면
+ * 조회할 때마다 단언이 필요해진다. HTTP 상태 코드는 본래 숫자다.
+ */
+/** 이 값 이상이면 서버 오류로 간주해 스택을 로그에 남긴다 */
+const SERVER_ERROR_THRESHOLD = 500;
+
+const STATUS_TO_ERROR_CODE: Partial<Record<number, ErrorCode>> = {
   [HttpStatus.BAD_REQUEST]: ErrorCode.VALIDATION_FAILED,
   [HttpStatus.UNAUTHORIZED]: ErrorCode.UNAUTHORIZED,
   [HttpStatus.FORBIDDEN]: ErrorCode.FORBIDDEN,
@@ -41,7 +50,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const { status, errorCode, message } = this.resolve(exception);
 
-    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+    // status는 number이므로 HttpStatus enum과 직접 비교하지 않는다
+    if (status >= SERVER_ERROR_THRESHOLD) {
       // 예상하지 못한 오류만 스택과 함께 남긴다
       this.logger.error(
         `${request.method} ${request.url}`,
@@ -64,7 +74,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 
   private resolve(exception: unknown): {
-    status: HttpStatus;
+    status: number;
     errorCode: ErrorCode;
     message: string;
   } {
@@ -79,12 +89,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     // 2. NestJS 내장 예외 (ValidationPipe 포함)
     if (exception instanceof HttpException) {
-      const status = exception.getStatus();
+      const status: number = exception.getStatus();
+      const mapped: ErrorCode | undefined = STATUS_TO_ERROR_CODE[status];
+
       return {
         status,
         errorCode:
-          STATUS_TO_ERROR_CODE[status] ??
-          (status >= HttpStatus.INTERNAL_SERVER_ERROR
+          mapped ??
+          (status >= SERVER_ERROR_THRESHOLD
             ? ErrorCode.INTERNAL_ERROR
             : ErrorCode.VALIDATION_FAILED),
         message: this.extractMessage(exception),
@@ -109,7 +121,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (typeof res === 'string') return res;
 
     if (typeof res === 'object' && res !== null && 'message' in res) {
-      const msg = (res as { message: unknown }).message;
+      const msg: unknown = res.message;
       if (Array.isArray(msg)) return msg.join(', ');
       if (typeof msg === 'string') return msg;
     }
