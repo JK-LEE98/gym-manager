@@ -46,6 +46,44 @@ export function ApiCommonResponse<TModel extends Type<unknown>>(
 }
 
 /**
+ * 페이지네이션 응답을 문서화한다.
+ *
+ * 목록 API는 `data`가 배열이 아니라 `{ items, total, page, limit, totalPages }` 객체다.
+ * ApiCommonResponse의 isArray로는 이 구조를 표현할 수 없어 별도로 둔다.
+ */
+export function ApiPaginatedResponse<TModel extends Type<unknown>>(
+  model: TModel,
+  options?: { description?: string; message?: string },
+) {
+  return applyDecorators(
+    ApiExtraModels(model),
+    ApiResponse({
+      status: 200,
+      description: options?.description,
+      schema: {
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              items: { type: 'array', items: { $ref: getSchemaPath(model) } },
+              total: { type: 'integer', example: 137 },
+              page: { type: 'integer', example: 1 },
+              limit: { type: 'integer', example: 20 },
+              totalPages: { type: 'integer', example: 7 },
+            },
+          },
+          message: {
+            type: 'string',
+            example: options?.message ?? '요청이 처리되었습니다',
+          },
+        },
+      },
+    }),
+  );
+}
+
+/**
  * 실패 응답을 공통 포맷으로 문서화한다.
  *
  * 어떤 errorCode가 나올 수 있는지 명시해 클라이언트가 분기를 준비할 수 있게 한다.

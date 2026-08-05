@@ -35,6 +35,14 @@ export enum ErrorCode {
   /** 이미 폐기된 토큰이 재제출됨. 탈취로 간주하고 전체 세션을 종료한다 @see ADR-006 */
   TOKEN_REUSE_DETECTED = 'TOKEN_REUSE_DETECTED',
 
+  /** 본인 비밀번호 변경 시 현재 비밀번호 불일치 */
+  INVALID_CURRENT_PASSWORD = 'INVALID_CURRENT_PASSWORD',
+
+  // --- 사용자 ---
+  USER_NOT_FOUND = 'USER_NOT_FOUND',
+  /** 허용되지 않는 역할 변경 (OWNER·SUPER_ADMIN 관련) */
+  INVALID_ROLE_CHANGE = 'INVALID_ROLE_CHANGE',
+
   // --- 헬스장 ---
   GYM_NOT_FOUND = 'GYM_NOT_FOUND',
   /** 구독 해지 등으로 비활성화된 헬스장 */
@@ -96,6 +104,18 @@ export const ERROR_METADATA: Record<
     status: HttpStatus.UNAUTHORIZED,
     // 공격자에게 감지 사실을 알릴 필요는 없으므로 일반적인 문구를 쓴다
     message: '보안상의 이유로 모든 세션이 종료되었습니다. 다시 로그인해 주세요',
+  },
+  [ErrorCode.INVALID_CURRENT_PASSWORD]: {
+    status: HttpStatus.UNAUTHORIZED,
+    message: '현재 비밀번호가 올바르지 않습니다',
+  },
+  [ErrorCode.USER_NOT_FOUND]: {
+    status: HttpStatus.NOT_FOUND,
+    message: '존재하지 않는 회원입니다',
+  },
+  [ErrorCode.INVALID_ROLE_CHANGE]: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '허용되지 않는 역할 변경입니다',
   },
   [ErrorCode.GYM_NOT_FOUND]: {
     status: HttpStatus.NOT_FOUND,
