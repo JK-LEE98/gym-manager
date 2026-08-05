@@ -27,7 +27,8 @@ const BCRYPT_ROUNDS = 10;
 const PG_UNIQUE_VIOLATION = '23505';
 
 /** 혼동하기 쉬운 문자(0/O, 1/l/I)를 제외했다. 관리자가 구두로 전달하는 상황을 고려 */
-const TEMP_PASSWORD_CHARS = 'abcdefghijkmnpqrstuvwxyzACDEFGHJKLMNPQRSTUVWXYZ23456789';
+const TEMP_PASSWORD_CHARS =
+  'abcdefghijkmnpqrstuvwxyzACDEFGHJKLMNPQRSTUVWXYZ23456789';
 const TEMP_PASSWORD_LENGTH = 10;
 
 /** 역할 변경이 허용되는 조합. OWNER·SUPER_ADMIN은 어느 쪽으로도 바꿀 수 없다 */
@@ -68,7 +69,9 @@ export class UsersService {
         );
 
         if (role === Role.TRAINER) {
-          await manager.save(manager.create(TrainerProfile, { userId: user.id }));
+          await manager.save(
+            manager.create(TrainerProfile, { userId: user.id }),
+          );
         }
 
         return UserDetailResponseDto.from(user);
@@ -109,7 +112,7 @@ export class UsersService {
       .getManyAndCount();
 
     return PaginatedResponseDto.of(
-      users.map(UserDetailResponseDto.from),
+      users.map((user) => UserDetailResponseDto.from(user)),
       total,
       page,
       limit,

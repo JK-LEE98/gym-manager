@@ -47,7 +47,9 @@ export class UsersController {
   @Patch('me')
   @ResponseMessage('정보가 수정되었습니다')
   @ApiOperation({ summary: '내 정보 수정' })
-  @ApiCommonResponse(UserDetailResponseDto, { message: '정보가 수정되었습니다' })
+  @ApiCommonResponse(UserDetailResponseDto, {
+    message: '정보가 수정되었습니다',
+  })
   updateMe(
     @CurrentUser('sub') userId: string,
     @Body() dto: UpdateUserDto,
@@ -88,7 +90,11 @@ export class UsersController {
     status: 201,
     message: '회원이 등록되었습니다',
   })
-  @ApiErrorResponse(409, [ErrorCode.DUPLICATE_LOGIN_ID], '이미 사용 중인 아이디')
+  @ApiErrorResponse(
+    409,
+    [ErrorCode.DUPLICATE_LOGIN_ID],
+    '이미 사용 중인 아이디',
+  )
   create(
     @Body() dto: CreateUserDto,
     @CurrentUser('gymId') gymId: string,
@@ -145,7 +151,9 @@ export class UsersController {
     description:
       'MEMBER ↔ TRAINER 만 가능하다. TRAINER 승격 시 프로필이 자동 생성되고, 강등 시 삭제된다.',
   })
-  @ApiCommonResponse(UserDetailResponseDto, { message: '역할이 변경되었습니다' })
+  @ApiCommonResponse(UserDetailResponseDto, {
+    message: '역할이 변경되었습니다',
+  })
   @ApiErrorResponse(
     400,
     [ErrorCode.INVALID_ROLE_CHANGE],
@@ -182,7 +190,8 @@ export class UsersController {
   @HttpCode(204)
   @ApiOperation({
     summary: '회원 삭제',
-    description: 'soft delete. 출석·회원권 이력이 참조하므로 물리 삭제하지 않는다.',
+    description:
+      'soft delete. 출석·회원권 이력이 참조하므로 물리 삭제하지 않는다.',
   })
   remove(
     @Param('id', ParseUUIDPipe) id: string,

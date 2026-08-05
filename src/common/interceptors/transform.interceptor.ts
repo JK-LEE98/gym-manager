@@ -19,9 +19,10 @@ const DEFAULT_MESSAGE = '요청이 처리되었습니다';
  * 컨트롤러마다 손으로 감싸면 반드시 누락되는 곳이 생기기 때문이다.
  */
 @Injectable()
-export class TransformInterceptor<T>
-  implements NestInterceptor<T, ApiSuccessResponse<T>>
-{
+export class TransformInterceptor<T> implements NestInterceptor<
+  T,
+  ApiSuccessResponse<T>
+> {
   constructor(private readonly reflector: Reflector) {}
 
   intercept(

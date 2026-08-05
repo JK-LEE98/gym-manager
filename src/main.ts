@@ -40,4 +40,6 @@ async function bootstrap() {
   console.log(`🚀 Server running on http://localhost:${port}`);
   console.log(`📄 Swagger: http://localhost:${port}/api-docs`);
 }
-bootstrap();
+// void로 표시해 "의도적으로 결과를 기다리지 않음"을 명시한다.
+// 최상위에서 await할 수 없고, 실패 시 Node가 프로세스를 종료시킨다
+void bootstrap();

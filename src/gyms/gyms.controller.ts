@@ -57,7 +57,11 @@ export class GymsController {
     status: 201,
     message: '헬스장이 등록되었습니다',
   })
-  @ApiErrorResponse(409, [ErrorCode.DUPLICATE_LOGIN_ID], '이미 사용 중인 아이디')
+  @ApiErrorResponse(
+    409,
+    [ErrorCode.DUPLICATE_LOGIN_ID],
+    '이미 사용 중인 아이디',
+  )
   create(@Body() dto: CreateGymDto): Promise<CreateGymResponseDto> {
     return this.gymsService.create(dto);
   }
@@ -93,7 +97,9 @@ export class GymsController {
   @Patch(':id')
   @ResponseMessage('헬스장 정보가 수정되었습니다')
   @ApiOperation({ summary: '헬스장 정보 수정' })
-  @ApiCommonResponse(GymResponseDto, { message: '헬스장 정보가 수정되었습니다' })
+  @ApiCommonResponse(GymResponseDto, {
+    message: '헬스장 정보가 수정되었습니다',
+  })
   @ApiErrorResponse(403, [ErrorCode.TENANT_MISMATCH], '다른 헬스장 접근 시도')
   update(
     @Param('id', ParseUUIDPipe) id: string,
