@@ -11,5 +11,18 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  # E2E 테스트 전용 DB.
+  # 테스트는 매번 테이블을 비우므로 개발 DB와 반드시 분리해야 한다.
+  # volume을 두지 않아 컨테이너를 내리면 데이터가 사라진다 (테스트 데이터는 보존 가치가 없다)
+  postgres-test:
+    image: postgres:16
+    container_name: gym-manager-db-test
+    environment:
+      POSTGRES_USER: gym
+      POSTGRES_PASSWORD: gym1234
+      POSTGRES_DB: gym_manager_test
+    ports:
+      - '5433:5432'
+
 volumes:
   postgres_data:
