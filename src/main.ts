@@ -1,28 +1,13 @@
-import { NestFactory, Reflector } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { TransformInterceptor } from './common/interceptors/transform.interceptor';
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { configureApp } from './app.setup';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Spring의 @Valid + BindingResult 역할
-  // DTO에 붙인 class-validator 데코레이터를 전역으로 활성화
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true, // DTO에 없는 필드는 자동으로 제거
-      forbidNonWhitelisted: true, // DTO에 없는 필드가 오면 400 에러
-      transform: true, // 요청 데이터를 DTO 타입으로 자동 변환
-    }),
-  );
-
-  // 성공 응답 → { success, data, message } 자동 래핑
-  app.useGlobalInterceptors(new TransformInterceptor(app.get(Reflector)));
-
-  // 모든 예외 → { success, data, message, errorCode } 통일
-  app.useGlobalFilters(new AllExceptionsFilter());
+  // 전역 파이프·인터셉터·필터. E2E 테스트도 같은 함수를 사용한다
+  configureApp(app);
 
   // Swagger 설정 (Spring의 Springdoc과 동일한 역할)
   const config = new DocumentBuilder()
@@ -40,6 +25,7 @@ async function bootstrap() {
   console.log(`🚀 Server running on http://localhost:${port}`);
   console.log(`📄 Swagger: http://localhost:${port}/api-docs`);
 }
+
 // void로 표시해 "의도적으로 결과를 기다리지 않음"을 명시한다.
 // 최상위에서 await할 수 없고, 실패 시 Node가 프로세스를 종료시킨다
 void bootstrap();

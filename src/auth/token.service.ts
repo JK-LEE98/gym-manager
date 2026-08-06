@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, LessThan, Repository } from 'typeorm';
-import { createHash } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import { RefreshToken, RevokeReason } from './entities/refresh-token.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { User } from '../users/entities/user.entity';
@@ -42,8 +42,15 @@ export class TokenService {
     };
 
     const accessToken = await this.jwt.signAsync(payload);
+
+    // jti(JWT ID)로 매번 다른 토큰을 보장한다.
+    //
+    // 없으면 payload가 { sub }뿐이고 iat는 초 단위라,
+    // 같은 초에 두 번 발급하면 토큰 문자열이 완전히 동일해진다.
+    // 그 결과 tokenHash의 unique 제약을 위반해 500이 발생한다.
+    // (로그인 직후 즉시 갱신하는 경우가 해당된다 — E2E 테스트로 발견)
     const refreshToken = await this.jwt.signAsync(
-      { sub: user.id },
+      { sub: user.id, jti: randomUUID() },
       this.refreshSignOptions(),
     );
 
