@@ -26,6 +26,11 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+# 컨테이너 기본값은 UTC다. 회원권 잔여일을 "오늘" 기준으로 계산하는데,
+# UTC면 한국 시간 오전 9시 이전에 하루 전으로 계산되어 잘못된 값이 나온다.
+# 국내 전용 서비스이므로 KST로 고정한다. → ADR-010
+ENV TZ=Asia/Seoul
+
 # 운영 의존성만 설치한다.
 # builder의 node_modules를 복사하지 않고 다시 설치하는 이유:
 #   devDependencies가 섞이지 않은 깨끗한 트리를 만들기 위함이다.

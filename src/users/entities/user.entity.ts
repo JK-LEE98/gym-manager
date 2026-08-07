@@ -59,8 +59,23 @@ export class User {
   @Column({ length: 50 })
   name: string;
 
+  /** 헬스장에서 실질적인 연락 수단이다 */
   @Column({ type: 'varchar', length: 20, nullable: true })
   phone: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  address: string | null;
+
+  @Column({ name: 'birth_date', type: 'date', nullable: true })
+  birthDate: string | null;
+
+  /**
+   * 회원 전반의 특이사항. 무릎 부상 이력, 응대 시 참고사항 등.
+   *
+   * 결제 건별 기록은 UserMembership.memo에 둔다. 성격이 다른 정보다. @see ADR-010
+   */
+  @Column({ type: 'text', nullable: true })
+  memo: string | null;
 
   @Column({ type: 'enum', enum: Role })
   role: Role;
