@@ -63,6 +63,14 @@ export enum ErrorCode {
   HOLD_PAST_DATE_FORBIDDEN = 'HOLD_PAST_DATE_FORBIDDEN',
   /** 회원권 이용 기간을 벗어난 홀딩 */
   HOLD_OUT_OF_RANGE = 'HOLD_OUT_OF_RANGE',
+  /** 양도권은 홀딩할 수 없다 @see ADR-012 */
+  HOLD_NOT_ALLOWED_FOR_TRANSFERRED = 'HOLD_NOT_ALLOWED_FOR_TRANSFERRED',
+
+  // --- 양도 ---
+  /** 만료되었거나 잔여 일수가 없는 회원권 */
+  TRANSFER_NO_REMAINING_DAYS = 'TRANSFER_NO_REMAINING_DAYS',
+  /** 자기 자신에게 양도 시도 */
+  TRANSFER_SAME_USER = 'TRANSFER_SAME_USER',
 
   // --- 헬스장 ---
   GYM_NOT_FOUND = 'GYM_NOT_FOUND',
@@ -177,6 +185,18 @@ export const ERROR_METADATA: Record<
   [ErrorCode.HOLD_OUT_OF_RANGE]: {
     status: HttpStatus.BAD_REQUEST,
     message: '회원권 이용 기간을 벗어났습니다',
+  },
+  [ErrorCode.HOLD_NOT_ALLOWED_FOR_TRANSFERRED]: {
+    status: HttpStatus.CONFLICT,
+    message: '양도받은 회원권은 홀딩할 수 없습니다',
+  },
+  [ErrorCode.TRANSFER_NO_REMAINING_DAYS]: {
+    status: HttpStatus.CONFLICT,
+    message: '남은 기간이 없어 양도할 수 없습니다',
+  },
+  [ErrorCode.TRANSFER_SAME_USER]: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '본인에게는 양도할 수 없습니다',
   },
   [ErrorCode.GYM_NOT_FOUND]: {
     status: HttpStatus.NOT_FOUND,

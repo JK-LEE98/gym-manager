@@ -10,6 +10,11 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { MembershipsService } from './memberships.service';
+import { TransfersService } from './transfers.service';
+import {
+  TransferMembershipDto,
+  TransferResponseDto,
+} from './dto/membership-transfer.dto';
 import {
   CreateMembershipTypeDto,
   MembershipTypeQueryDto,
@@ -100,7 +105,10 @@ export class MembershipTypesController {
 @ApiTags('Memberships')
 @Controller('memberships')
 export class MembershipsController {
-  constructor(private readonly service: MembershipsService) {}
+  constructor(
+    private readonly service: MembershipsService,
+    private readonly transfersService: TransfersService,
+  ) {}
 
   // /memberships/me 는 /memberships/:id 보다 먼저 선언해야 한다.
   // 뒤에 두면 'me'가 :id로 해석되어 ParseUUIDPipe에서 400이 난다.
@@ -181,6 +189,49 @@ export class MembershipsController {
     @CurrentUser('gymId') gymId: string,
   ): Promise<UserMembershipResponseDto> {
     return this.service.extend(id, dto, gymId);
+  }
+
+  @Roles(Role.OWNER)
+  @Post(':id/transfer')
+  @ResponseMessage('회원권이 양도되었습니다')
+  @ApiOperation({
+    summary: '회원권 양도',
+    description:
+      '경로의 id는 양도인의 회원권이다. 잔여 일수를 양수인에게 이전한다. ' +
+      '진행 중인 홀딩은 어제까지로 조기 종료되어 이미 지난 홀딩 일수는 보존된다. ' +
+      '양도권은 이후 홀딩할 수 없다.',
+  })
+  @ApiCommonResponse(TransferResponseDto, {
+    status: 201,
+    message: '회원권이 양도되었습니다',
+  })
+  @ApiErrorResponse(400, [ErrorCode.TRANSFER_SAME_USER], '본인에게 양도 시도')
+  @ApiErrorResponse(
+    409,
+    [ErrorCode.TRANSFER_NO_REMAINING_DAYS, ErrorCode.INVALID_MEMBERSHIP_STATUS],
+    '잔여 없음 또는 이용 중이 아닌 회원권',
+  )
+  transfer(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: TransferMembershipDto,
+    @CurrentUser('gymId') gymId: string,
+    @CurrentUser('sub') operatorId: string,
+  ): Promise<TransferResponseDto> {
+    return this.transfersService.transfer(id, dto, gymId, operatorId);
+  }
+
+  @Roles(Role.OWNER)
+  @Get('transfers/history')
+  @ApiOperation({
+    summary: '회원의 양도 이력',
+    description: '준 것과 받은 것을 모두 포함한다.',
+  })
+  @ApiCommonResponse(TransferResponseDto, { isArray: true })
+  transferHistory(
+    @Query('userId', ParseUUIDPipe) userId: string,
+    @CurrentUser('gymId') gymId: string,
+  ): Promise<TransferResponseDto[]> {
+    return this.transfersService.findByUser(userId, gymId);
   }
 
   @Roles(Role.OWNER)

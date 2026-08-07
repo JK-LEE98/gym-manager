@@ -36,6 +36,12 @@ export class HoldsService {
   async create(dto: CreateHoldDto, actor: Actor): Promise<HoldResponseDto> {
     const membership = await this.getMembership(dto.userMembershipId, actor);
 
+    // 양도권은 원본과 같은 종류를 참조하므로 그 종류의 홀딩 정책이 적용된다.
+    // 종류 정책보다 우선하는 개별 제약이다. @see ADR-012
+    if (membership.isTransferred) {
+      throw new BusinessException(ErrorCode.HOLD_NOT_ALLOWED_FOR_TRANSFERRED);
+    }
+
     this.assertDateOrder(dto.startDate, dto.endDate);
     this.assertActorMayUseDate(dto.startDate, actor);
     this.assertWithinMembership(membership, dto.startDate, dto.endDate);
@@ -182,6 +188,52 @@ export class HoldsService {
     return HoldResponseDto.from(await this.getHold(id, actor));
   }
 
+  /**
+   * 양도를 위해 진행 중·예정 홀딩을 정리한다.
+   *
+   * **단순 취소가 아니다.** 이미 지나간 홀딩 일수는 인정해야 한다.
+   *
+   * ```
+   * 30일권 8/1~8/30, 8/5~8/9 홀딩, 8/7에 양도
+   *
+   * 취소하면      endDate 8/30 → 잔여 24일   ❌ 8/5·8/6 이틀을 손해
+   * 조기 종료하면 홀딩을 8/5~8/6으로 단축
+   *              endDate 9/1  → 잔여 26일   ✅
+   * ```
+   *
+   * @see ADR-012
+   */
+  async settleHoldsForTransfer(
+    manager: EntityManager,
+    userMembershipId: string,
+  ): Promise<void> {
+    const now = today();
+    const holds = await manager.find(MembershipHold, {
+      where: { userMembershipId, status: HoldStatus.ACTIVE },
+    });
+
+    for (const hold of holds) {
+      const alreadyEnded = daysBetween(hold.endDate, now) > 0;
+      if (alreadyEnded) continue; // 완료된 홀딩은 이미 반영되어 있다
+
+      const notStartedYet = daysBetween(now, hold.startDate) >= 0;
+      if (notStartedYet) {
+        // 오늘 시작이거나 미래 예정 → 홀딩된 날이 하루도 없으므로 취소
+        await manager.update(MembershipHold, hold.id, {
+          status: HoldStatus.CANCELLED,
+        });
+        continue;
+      }
+
+      // 진행 중 → 어제까지로 단축. 지나간 홀딩 일수는 보존된다
+      await manager.update(MembershipHold, hold.id, {
+        endDate: addDays(now, -1),
+      });
+    }
+
+    await this.recalculateEndDate(manager, userMembershipId);
+  }
+
   // ---------- 종료일 재계산 ----------
 
   /**
@@ -195,7 +247,7 @@ export class HoldsService {
    * 수정이 반복되거나 중간에 다른 변경이 끼면 숫자가 어긋나고 되돌리기 어렵다.
    * 전체 재계산은 몇 번을 수정해도 결과가 항상 정확하다. @see ADR-011
    */
-  private async recalculateEndDate(
+  async recalculateEndDate(
     manager: EntityManager,
     userMembershipId: string,
   ): Promise<void> {
