@@ -216,7 +216,10 @@ export class MembershipsService {
     this.assertNotCancelled(membership);
 
     membership.endDate = addDays(membership.endDate, dto.days);
-    if (dto.memo) membership.memo = dto.memo;
+    // 사유를 메모에 누적한다. 여러 번 연장되면 이력이 쌓여 추적이 가능하다
+    membership.memo = [membership.memo, `[+${dto.days}일] ${dto.reason}`]
+      .filter(Boolean)
+      .join('\n');
 
     await this.membershipRepo.save(membership);
     return this.findOne(id, gymId);

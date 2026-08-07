@@ -34,6 +34,23 @@ export class CreateMembershipTypeDto {
   @IsInt()
   @Min(0)
   price: number;
+
+  /**
+   * 홀딩 가능 횟수. 생략하면 0(홀딩 불가).
+   *
+   * 실제 정책이 회원권 기간에 따라 갈리므로 종류마다 지정한다.
+   * "3개월권" 0회 / "6개월권" 3회 / "12개월권" 5회 처럼.
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  holdingLimit?: number;
+
+  /** 1회 홀딩당 최대 일수. 생략하면 14일 */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  holdingMaxDays?: number;
 }
 
 export class UpdateMembershipTypeDto {
@@ -56,6 +73,16 @@ export class UpdateMembershipTypeDto {
   @IsInt()
   @Min(0)
   price?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  holdingLimit?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  holdingMaxDays?: number;
 }
 
 export class MembershipTypeQueryDto {
@@ -78,6 +105,10 @@ export class MembershipTypeResponseDto {
   category: string;
   durationDays: number;
   price: number;
+  /** 홀딩 가능 횟수. 0이면 홀딩 불가 */
+  holdingLimit: number;
+  /** 1회 홀딩당 최대 일수 */
+  holdingMaxDays: number;
   isActive: boolean;
 
   static from(type: MembershipType): MembershipTypeResponseDto {
@@ -87,6 +118,8 @@ export class MembershipTypeResponseDto {
     dto.category = type.category;
     dto.durationDays = type.durationDays;
     dto.price = type.price;
+    dto.holdingLimit = type.holdingLimit;
+    dto.holdingMaxDays = type.holdingMaxDays;
     dto.isActive = type.isActive;
     return dto;
   }
