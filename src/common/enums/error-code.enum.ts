@@ -51,6 +51,19 @@ export enum ErrorCode {
   /** 이미 취소되었거나 정지 상태에서 허용되지 않는 조작 */
   INVALID_MEMBERSHIP_STATUS = 'INVALID_MEMBERSHIP_STATUS',
 
+  // --- 홀딩 ---
+  HOLD_NOT_FOUND = 'HOLD_NOT_FOUND',
+  /** 회원권 종류의 holdingLimit 초과 */
+  HOLD_LIMIT_EXCEEDED = 'HOLD_LIMIT_EXCEEDED',
+  /** 1회당 최대 일수 초과 */
+  HOLD_DURATION_EXCEEDED = 'HOLD_DURATION_EXCEEDED',
+  /** 기존 홀딩과 기간이 겹침 */
+  HOLD_OVERLAPPED = 'HOLD_OVERLAPPED',
+  /** 회원은 과거 날짜로 홀딩할 수 없다 (소급은 OWNER만) */
+  HOLD_PAST_DATE_FORBIDDEN = 'HOLD_PAST_DATE_FORBIDDEN',
+  /** 회원권 이용 기간을 벗어난 홀딩 */
+  HOLD_OUT_OF_RANGE = 'HOLD_OUT_OF_RANGE',
+
   // --- 헬스장 ---
   GYM_NOT_FOUND = 'GYM_NOT_FOUND',
   /** 구독 해지 등으로 비활성화된 헬스장 */
@@ -140,6 +153,30 @@ export const ERROR_METADATA: Record<
   [ErrorCode.INVALID_MEMBERSHIP_STATUS]: {
     status: HttpStatus.CONFLICT,
     message: '현재 상태에서는 처리할 수 없습니다',
+  },
+  [ErrorCode.HOLD_NOT_FOUND]: {
+    status: HttpStatus.NOT_FOUND,
+    message: '존재하지 않는 홀딩 내역입니다',
+  },
+  [ErrorCode.HOLD_LIMIT_EXCEEDED]: {
+    status: HttpStatus.CONFLICT,
+    message: '홀딩 가능 횟수를 초과했습니다',
+  },
+  [ErrorCode.HOLD_DURATION_EXCEEDED]: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '1회 홀딩 가능 일수를 초과했습니다',
+  },
+  [ErrorCode.HOLD_OVERLAPPED]: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 홀딩된 기간과 겹칩니다',
+  },
+  [ErrorCode.HOLD_PAST_DATE_FORBIDDEN]: {
+    status: HttpStatus.FORBIDDEN,
+    message: '지난 날짜로는 홀딩할 수 없습니다. 헬스장에 문의해 주세요',
+  },
+  [ErrorCode.HOLD_OUT_OF_RANGE]: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '회원권 이용 기간을 벗어났습니다',
   },
   [ErrorCode.GYM_NOT_FOUND]: {
     status: HttpStatus.NOT_FOUND,
