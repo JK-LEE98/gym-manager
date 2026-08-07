@@ -324,10 +324,12 @@ describe('회원권 (e2e)', () => {
       const res = await request(app.getHttpServer())
         .patch(`/memberships/${membership.id}/extend`)
         .set('Authorization', `Bearer ${ownerToken}`)
-        .send({ days: 7 })
+        .send({ days: 7, reason: '시설 공사로 인한 휴관 보상' })
         .expect(200);
 
       expect(res.body.data.endDate).toBe(addDays(membership.endDate, 7));
+      // 사유가 메모에 누적되어 나중에 추적할 수 있어야 한다
+      expect(res.body.data.memo).toContain('시설 공사');
     });
 
     it('취소된 회원권은 다시 변경할 수 없다', async () => {
@@ -342,7 +344,7 @@ describe('회원권 (e2e)', () => {
       const res = await request(app.getHttpServer())
         .patch(`/memberships/${membership.id}/extend`)
         .set('Authorization', `Bearer ${ownerToken}`)
-        .send({ days: 7 })
+        .send({ days: 7, reason: '테스트' })
         .expect(409);
 
       expect(res.body.errorCode).toBe('INVALID_MEMBERSHIP_STATUS');

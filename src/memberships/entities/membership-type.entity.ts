@@ -51,6 +51,19 @@ export class MembershipType {
   price: number;
 
   /**
+   * 홀딩(휴회) 가능 횟수. 0이면 홀딩 불가.
+   *
+   * 실제 헬스장 정책이 회원권 기간에 따라 갈리므로 종류마다 지정한다.
+   * "3개월권" 0회 / "6개월권" 3회 / "12개월권" 5회 처럼. @see ADR-011
+   */
+  @Column({ name: 'holding_limit', type: 'int', default: 0 })
+  holdingLimit: number;
+
+  /** 1회 홀딩당 최대 일수. 실무 관행상 2주가 일반적이다 */
+  @Column({ name: 'holding_max_days', type: 'int', default: 14 })
+  holdingMaxDays: number;
+
+  /**
    * 판매 여부. 삭제 대신 이 값을 false로 둔다.
    * 이미 판매된 UserMembership이 참조하고 있어 물리 삭제할 수 없다.
    */

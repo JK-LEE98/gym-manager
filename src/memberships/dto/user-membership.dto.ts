@@ -3,6 +3,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Length,
   Matches,
   Min,
 } from 'class-validator';
@@ -56,9 +57,16 @@ export class ExtendMembershipDto {
   @Min(1)
   days: number;
 
-  @IsOptional()
+  /**
+   * 연장 사유. **필수다.**
+   *
+   * 홀딩이 제대로 동작하면 이 API는 "귀찮으니 며칠 더 주자"의 우회 경로가 되기 쉽다.
+   * 사유를 남겨야 "이 회원권은 왜 이렇게 길지?"를 나중에 추적할 수 있다.
+   * 시설 휴관 보상처럼 홀딩으로 표현할 수 없는 정당한 용도를 위해 유지한다. @see ADR-011
+   */
   @IsString()
-  memo?: string;
+  @Length(1, 200)
+  reason: string;
 }
 
 export class UserMembershipResponseDto {
