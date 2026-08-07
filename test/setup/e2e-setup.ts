@@ -2,8 +2,10 @@ import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
 import request from 'supertest';
+import * as bcrypt from 'bcrypt';
 import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/app.setup';
+import { Role } from '../../src/common/enums/role.enum';
 
 /**
  * E2E 테스트용 애플리케이션을 띄운다.
@@ -66,6 +68,37 @@ export async function createGym(
   await app
     .get(DataSource)
     .query('INSERT INTO gyms (id, name) VALUES ($1, $2)', [gym.id, gym.name]);
+}
+
+/**
+ * OWNER 계정을 만들고 로그인한다.
+ *
+ * OWNER는 SUPER_ADMIN이 헬스장 등록 시 발급하는 계정이라 가입 API가 없다.
+ * 테스트에서는 직접 INSERT한다.
+ */
+export async function createOwner(
+  app: INestApplication,
+  gymId: string,
+  loginId: string,
+): Promise<{ accessToken: string; userId: string }> {
+  const password = 'owner1234';
+
+  await app
+    .get(DataSource)
+    .query(
+      'INSERT INTO users (gym_id, login_id, password, name, role) VALUES ($1, $2, $3, $4, $5)',
+      [gymId, loginId, await bcrypt.hash(password, 10), '운영계정', Role.OWNER],
+    );
+
+  const login = await request(app.getHttpServer())
+    .post('/auth/login')
+    .send({ loginId, password })
+    .expect(200);
+
+  return {
+    accessToken: login.body.data.accessToken,
+    userId: login.body.data.user.id,
+  };
 }
 
 /** 회원가입 후 로그인까지 수행하고 Access Token을 반환한다 */

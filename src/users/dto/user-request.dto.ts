@@ -1,4 +1,5 @@
 import {
+  IsDateString,
   IsEnum,
   IsOptional,
   IsString,
@@ -36,6 +37,21 @@ export class CreateUserDto {
   @Length(1, 20)
   phone?: string;
 
+  @IsOptional()
+  @IsString()
+  @Length(1, 255)
+  address?: string;
+
+  /** YYYY-MM-DD */
+  @IsOptional()
+  @IsDateString()
+  birthDate?: string;
+
+  /** 회원 전반의 특이사항. 형식을 강제하지 않는다 */
+  @IsOptional()
+  @IsString()
+  memo?: string;
+
   /** 생략 시 MEMBER. OWNER·SUPER_ADMIN은 지정할 수 없다 */
   @IsOptional()
   @IsEnum(Role)
@@ -52,6 +68,19 @@ export class UpdateUserDto {
   @IsString()
   @Length(1, 20)
   phone?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(1, 255)
+  address?: string;
+
+  @IsOptional()
+  @IsDateString()
+  birthDate?: string;
+
+  @IsOptional()
+  @IsString()
+  memo?: string;
 }
 
 export class UpdateRoleDto {
