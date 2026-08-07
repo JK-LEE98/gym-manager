@@ -11,6 +11,7 @@ import { BusinessException } from '../common/exceptions/business.exception';
 import { TokenService } from '../auth/token.service';
 import { RevokeReason } from '../auth/entities/refresh-token.entity';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
+import { MembershipsService } from '../memberships/memberships.service';
 import {
   ChangePasswordDto,
   CreateUserDto,
@@ -40,6 +41,7 @@ export class UsersService {
     @InjectRepository(User) private readonly userRepo: Repository<User>,
     private readonly dataSource: DataSource,
     private readonly tokenService: TokenService,
+    private readonly membershipsService: MembershipsService,
   ) {}
 
   async create(
@@ -64,6 +66,9 @@ export class UsersService {
             password: await bcrypt.hash(dto.password, BCRYPT_ROUNDS),
             name: dto.name,
             phone: dto.phone ?? null,
+            address: dto.address ?? null,
+            birthDate: dto.birthDate ?? null,
+            memo: dto.memo ?? null,
             role,
           }),
         );
@@ -111,8 +116,16 @@ export class UsersService {
       .take(limit)
       .getManyAndCount();
 
+    // 회원마다 따로 조회하면 N+1이 된다. 현재 페이지의 회원 전체를 한 번에 가져온다
+    const membershipsByUser = await this.membershipsService.summarizeByUsers(
+      users.map((user) => user.id),
+      gymId,
+    );
+
     return PaginatedResponseDto.of(
-      users.map((user) => UserDetailResponseDto.from(user)),
+      users.map((user) =>
+        UserDetailResponseDto.from(user, membershipsByUser.get(user.id) ?? []),
+      ),
       total,
       page,
       limit,
@@ -120,7 +133,12 @@ export class UsersService {
   }
 
   async findOne(id: string, gymId: string): Promise<UserDetailResponseDto> {
-    return UserDetailResponseDto.from(await this.getInGym(id, gymId));
+    const user = await this.getInGym(id, gymId);
+    const memberships = await this.membershipsService.summarizeByUsers(
+      [user.id],
+      gymId,
+    );
+    return UserDetailResponseDto.from(user, memberships.get(user.id) ?? []);
   }
 
   async update(
@@ -129,9 +147,9 @@ export class UsersService {
     gymId: string,
   ): Promise<UserDetailResponseDto> {
     const user = await this.getInGym(id, gymId);
-    user.name = dto.name ?? user.name;
-    user.phone = dto.phone ?? user.phone;
-    return UserDetailResponseDto.from(await this.userRepo.save(user));
+    this.applyProfile(user, dto);
+    await this.userRepo.save(user);
+    return this.findOne(id, gymId);
   }
 
   /** 본인 정보 수정. 소속과 무관하게 자기 자신만 대상으로 한다 */
@@ -142,9 +160,17 @@ export class UsersService {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new BusinessException(ErrorCode.USER_NOT_FOUND);
 
+    this.applyProfile(user, dto);
+    return UserDetailResponseDto.from(await this.userRepo.save(user));
+  }
+
+  /** 부분 수정. 보내지 않은 필드는 기존 값을 유지한다 */
+  private applyProfile(user: User, dto: UpdateUserDto): void {
     user.name = dto.name ?? user.name;
     user.phone = dto.phone ?? user.phone;
-    return UserDetailResponseDto.from(await this.userRepo.save(user));
+    user.address = dto.address ?? user.address;
+    user.birthDate = dto.birthDate ?? user.birthDate;
+    user.memo = dto.memo ?? user.memo;
   }
 
   /**

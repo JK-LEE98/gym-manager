@@ -8,6 +8,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { GymsModule } from './gyms/gyms.module';
 import { UsersModule } from './users/users.module';
+import { MembershipsModule } from './memberships/memberships.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 
@@ -58,6 +59,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     AuthModule,
     GymsModule,
     UsersModule,
+    MembershipsModule,
   ],
   controllers: [AppController],
   providers: [

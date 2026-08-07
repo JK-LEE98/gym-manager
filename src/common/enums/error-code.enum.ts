@@ -43,6 +43,14 @@ export enum ErrorCode {
   /** 허용되지 않는 역할 변경 (OWNER·SUPER_ADMIN 관련) */
   INVALID_ROLE_CHANGE = 'INVALID_ROLE_CHANGE',
 
+  // --- 회원권 ---
+  MEMBERSHIP_TYPE_NOT_FOUND = 'MEMBERSHIP_TYPE_NOT_FOUND',
+  /** 판매 중지된 종류로 부여 시도 */
+  MEMBERSHIP_TYPE_INACTIVE = 'MEMBERSHIP_TYPE_INACTIVE',
+  MEMBERSHIP_NOT_FOUND = 'MEMBERSHIP_NOT_FOUND',
+  /** 이미 취소되었거나 정지 상태에서 허용되지 않는 조작 */
+  INVALID_MEMBERSHIP_STATUS = 'INVALID_MEMBERSHIP_STATUS',
+
   // --- 헬스장 ---
   GYM_NOT_FOUND = 'GYM_NOT_FOUND',
   /** 구독 해지 등으로 비활성화된 헬스장 */
@@ -116,6 +124,22 @@ export const ERROR_METADATA: Record<
   [ErrorCode.INVALID_ROLE_CHANGE]: {
     status: HttpStatus.BAD_REQUEST,
     message: '허용되지 않는 역할 변경입니다',
+  },
+  [ErrorCode.MEMBERSHIP_TYPE_NOT_FOUND]: {
+    status: HttpStatus.NOT_FOUND,
+    message: '존재하지 않는 회원권 종류입니다',
+  },
+  [ErrorCode.MEMBERSHIP_TYPE_INACTIVE]: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '판매가 중지된 회원권입니다',
+  },
+  [ErrorCode.MEMBERSHIP_NOT_FOUND]: {
+    status: HttpStatus.NOT_FOUND,
+    message: '존재하지 않는 회원권입니다',
+  },
+  [ErrorCode.INVALID_MEMBERSHIP_STATUS]: {
+    status: HttpStatus.CONFLICT,
+    message: '현재 상태에서는 처리할 수 없습니다',
   },
   [ErrorCode.GYM_NOT_FOUND]: {
     status: HttpStatus.NOT_FOUND,
