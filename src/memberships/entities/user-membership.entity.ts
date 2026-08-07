@@ -23,10 +23,12 @@ import { Payment } from './payment.entity';
  */
 export enum MembershipStatus {
   ACTIVE = 'ACTIVE',
-  /** 홀딩(휴회). Phase 2-2에서 구현 */
+  /** 홀딩(휴회) */
   SUSPENDED = 'SUSPENDED',
   /** 환불·착오 등록 등으로 취소 */
   CANCELLED = 'CANCELLED',
+  /** 다른 회원에게 양도해 종료됨. 이력으로 남는다 @see ADR-012 */
+  TRANSFERRED = 'TRANSFERRED',
 }
 
 /**
@@ -107,6 +109,15 @@ export class UserMembership {
    */
   @Column({ type: 'text', nullable: true })
   memo: string | null;
+
+  /**
+   * 양도로 생성된 회원권.
+   *
+   * **양도권은 홀딩할 수 없다.** 원본과 같은 MembershipType을 참조하므로
+   * 그 종류의 holdingLimit이 그대로 적용되는 것을 막기 위한 개별 제약이다. @see ADR-012
+   */
+  @Column({ name: 'is_transferred', default: false })
+  isTransferred: boolean;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
