@@ -17,14 +17,15 @@ import { Payment } from './payment.entity';
 /**
  * 회원권 상태.
  *
- * **만료(EXPIRED)가 없는 것이 의도적이다.**
- * 만료는 `endDate < 오늘`로 계산한다. 여기에는 사람이 개입한 상태만 담는다.
- * 같은 사실을 endDate와 status 두 곳에 저장하면 반드시 어긋난다. @see ADR-010
+ * **사람이 개입한 사건만 담는다.** 시간이 지나면 저절로 바뀌는 사실은 넣지 않는다.
+ *
+ * - 만료 여부 → `endDate < 오늘`로 계산 @see ADR-010
+ * - 홀딩 여부 → `MembershipHold`와 날짜로 계산 @see ADR-011
+ *
+ * 같은 사실을 두 곳에 저장하면 갱신이 한 번만 실패해도 영구히 어긋난다.
  */
 export enum MembershipStatus {
   ACTIVE = 'ACTIVE',
-  /** 홀딩(휴회) */
-  SUSPENDED = 'SUSPENDED',
   /** 환불·착오 등록 등으로 취소 */
   CANCELLED = 'CANCELLED',
   /** 다른 회원에게 양도해 종료됨. 이력으로 남는다 @see ADR-012 */
