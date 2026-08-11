@@ -14,6 +14,7 @@ import {
   CreateGymResponseDto,
   GymResponseDto,
   PublicGymResponseDto,
+  UpdateEntryPolicyDto,
 } from './dto/gym-response.dto';
 import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -72,6 +73,26 @@ export class GymsController {
   @ApiCommonResponse(GymResponseDto, { isArray: true })
   findAll(): Promise<GymResponseDto[]> {
     return this.gymsService.findAll();
+  }
+
+  // ':id' 보다 먼저 선언해야 'me'가 UUID로 해석되지 않는다
+  @Roles(Role.OWNER)
+  @Patch('me/entry-policy')
+  @ResponseMessage('출입 정책이 변경되었습니다')
+  @ApiOperation({
+    summary: '출입 정책 설정',
+    description:
+      'QR의 역할이 헬스장마다 다르다. reentryGraceMinutes=0이면 매 스캔이 새 입장(기록용), ' +
+      '30이면 그 시간 안의 재스캔을 같은 입장으로 본다(문이 열리는 24시 헬스장). ' +
+      'dailyEntryLimit에 null을 보내면 무제한으로 되돌린다.',
+  })
+  @ApiCommonResponse(GymResponseDto, { message: '출입 정책이 변경되었습니다' })
+  updateEntryPolicy(
+    @Body() dto: UpdateEntryPolicyDto,
+    // 경로로 받지 않는다. 토큰의 gymId만 신뢰한다 @see ADR-004
+    @CurrentUser('gymId') gymId: string,
+  ): Promise<GymResponseDto> {
+    return this.gymsService.updateEntryPolicy(gymId, dto);
   }
 
   @Roles(Role.SUPER_ADMIN, Role.OWNER)

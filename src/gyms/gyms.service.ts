@@ -13,6 +13,7 @@ import {
   GymOwnerResponseDto,
   GymResponseDto,
   PublicGymResponseDto,
+  UpdateEntryPolicyDto,
 } from './dto/gym-response.dto';
 
 const BCRYPT_ROUNDS = 10;
@@ -117,6 +118,29 @@ export class GymsService {
       address: dto.address ?? gym.address,
       phone: dto.phone ?? gym.phone,
     });
+
+    return GymResponseDto.from(await this.gymRepo.save(gym));
+  }
+
+  /**
+   * 출입 정책 설정. OWNER가 본인 헬스장에만 적용한다.
+   *
+   * `dailyEntryLimit`은 `undefined`(안 바꿈)와 `null`(무제한으로)을 구분해야 하므로
+   * `??` 대신 키 존재 여부로 판단한다. `?? gym.dailyEntryLimit`을 쓰면
+   * **null을 보내도 기존 값이 유지되어 무제한으로 되돌릴 수 없다.**
+   */
+  async updateEntryPolicy(
+    gymId: string,
+    dto: UpdateEntryPolicyDto,
+  ): Promise<GymResponseDto> {
+    const gym = await this.getOrThrow(gymId);
+
+    if ('dailyEntryLimit' in dto) {
+      gym.dailyEntryLimit = dto.dailyEntryLimit ?? null;
+    }
+    if (dto.reentryGraceMinutes !== undefined) {
+      gym.reentryGraceMinutes = dto.reentryGraceMinutes;
+    }
 
     return GymResponseDto.from(await this.gymRepo.save(gym));
   }

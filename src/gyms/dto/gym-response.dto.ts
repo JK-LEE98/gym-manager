@@ -1,3 +1,4 @@
+import { IsInt, IsOptional, Max, Min } from 'class-validator';
 import { Gym } from '../entities/gym.entity';
 import { User } from '../../users/entities/user.entity';
 import { Role } from '../../common/enums/role.enum';
@@ -9,6 +10,8 @@ export class GymResponseDto {
   address: string | null;
   phone: string | null;
   isActive: boolean;
+  dailyEntryLimit: number | null;
+  reentryGraceMinutes: number;
   createdAt: Date;
 
   static from(gym: Gym): GymResponseDto {
@@ -18,9 +21,42 @@ export class GymResponseDto {
     dto.address = gym.address;
     dto.phone = gym.phone;
     dto.isActive = gym.isActive;
+    dto.dailyEntryLimit = gym.dailyEntryLimit;
+    dto.reentryGraceMinutes = gym.reentryGraceMinutes;
     dto.createdAt = gym.createdAt;
     return dto;
   }
+}
+
+/**
+ * 출입 정책 설정.
+ *
+ * QR의 역할이 헬스장마다 달라 같은 코드로 두 가지를 지원해야 한다.
+ * 데스크가 있고 기록용으로만 찍는 곳과, QR을 찍어야 문이 열리는
+ * 24시 무인 헬스장은 필요한 동작이 다르다. @see ADR-013
+ */
+export class UpdateEntryPolicyDto {
+  /**
+   * 하루 입장 가능 횟수. `null`을 보내면 무제한으로 되돌린다.
+   *
+   * 생략(`undefined`)과 `null`은 다르다. 생략은 "안 바꿈", null은 "무제한으로".
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  dailyEntryLimit?: number | null;
+
+  /**
+   * 재출입 유예 시간(분). `0`이면 재출입 기능을 쓰지 않는다.
+   *
+   * 길게 잡을수록 그 시간 안에는 다른 사람이 찍어도 통과하므로
+   * 짧을수록 안전하다. 상한을 240분으로 둔다.
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(240)
+  reentryGraceMinutes?: number;
 }
 
 /**
