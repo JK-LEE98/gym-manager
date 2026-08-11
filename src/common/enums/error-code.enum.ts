@@ -72,6 +72,23 @@ export enum ErrorCode {
   /** 자기 자신에게 양도 시도 */
   TRANSFER_SAME_USER = 'TRANSFER_SAME_USER',
 
+  // --- 출석 ---
+  /** QR 토큰 만료(30초) 또는 위조 */
+  QR_TOKEN_EXPIRED = 'QR_TOKEN_EXPIRED',
+  /**
+   * Access Token 등 출석용이 아닌 토큰이 제출됨.
+   *
+   * 이 검증이 빠지면 30초 만료 설계가 통째로 무의미해진다.
+   * Access Token을 QR로 만들어 제출해도 서명이 유효하기 때문이다. @see ADR-013
+   */
+  INVALID_TOKEN_TYPE = 'INVALID_TOKEN_TYPE',
+  /** 휴회 중에는 입장할 수 없다. 자동 해제하지 않는다 @see ADR-013 */
+  MEMBERSHIP_ON_HOLD = 'MEMBERSHIP_ON_HOLD',
+  /** 유효한 회원권이 없음 (만료·취소·미보유) */
+  NO_ACTIVE_MEMBERSHIP = 'NO_ACTIVE_MEMBERSHIP',
+  /** 헬스장이 정한 하루 입장 횟수 초과 */
+  DAILY_ENTRY_LIMIT_EXCEEDED = 'DAILY_ENTRY_LIMIT_EXCEEDED',
+
   // --- 헬스장 ---
   GYM_NOT_FOUND = 'GYM_NOT_FOUND',
   /** 구독 해지 등으로 비활성화된 헬스장 */
@@ -198,6 +215,30 @@ export const ERROR_METADATA: Record<
     status: HttpStatus.BAD_REQUEST,
     message: '본인에게는 양도할 수 없습니다',
   },
+  // 출석 실패 문구는 **출입 통제형 헬스장에서 회원이 보는 유일한 화면**이다.
+  // "권한이 없습니다"로는 회원이 무엇을 해야 할지 알 수 없다. @see ADR-013
+  [ErrorCode.QR_TOKEN_EXPIRED]: {
+    status: HttpStatus.UNAUTHORIZED,
+    message: 'QR이 만료되었습니다. 다시 발급받아 주세요',
+  },
+  [ErrorCode.INVALID_TOKEN_TYPE]: {
+    status: HttpStatus.UNAUTHORIZED,
+    message: '출석용 QR이 아닙니다',
+  },
+  [ErrorCode.MEMBERSHIP_ON_HOLD]: {
+    status: HttpStatus.FORBIDDEN,
+    message: '현재 휴회중인 회원입니다. 휴회를 철회한 후 이용해주세요',
+  },
+  [ErrorCode.NO_ACTIVE_MEMBERSHIP]: {
+    status: HttpStatus.FORBIDDEN,
+    message: '이용 가능한 회원권이 없습니다. 데스크에 문의해주세요',
+  },
+  [ErrorCode.DAILY_ENTRY_LIMIT_EXCEEDED]: {
+    status: HttpStatus.CONFLICT,
+    message:
+      '오늘 입장 가능 횟수를 초과했습니다. 문제가 있으면 헬스장에 문의해주세요',
+  },
+
   [ErrorCode.GYM_NOT_FOUND]: {
     status: HttpStatus.NOT_FOUND,
     message: '존재하지 않는 헬스장입니다',
