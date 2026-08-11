@@ -9,6 +9,7 @@ import {
 import {
   Payment,
   PaymentMethod,
+  PaymentPurpose,
   PaymentStatus,
 } from './entities/payment.entity';
 import { User } from '../users/entities/user.entity';
@@ -117,6 +118,7 @@ export class MembershipsService {
           gymId,
           userId: dto.userId,
           membershipTypeId: type.id,
+          purpose: PaymentPurpose.MEMBERSHIP,
           // 할인 판매를 허용한다. 생략하면 정가
           amount: dto.amount ?? type.price,
           // PG 연동 전까지는 데스크에서 받고 기록만 남긴다

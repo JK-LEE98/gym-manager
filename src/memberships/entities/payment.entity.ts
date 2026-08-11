@@ -28,6 +28,23 @@ export enum PaymentStatus {
 }
 
 /**
+ * 이 결제가 무엇에 대한 것인지.
+ *
+ * **매출 통계를 종류별로 나누기 위해 필요하다.**
+ * 없으면 PT 계약금과 양도 수수료가 회원권 매출에 섞여 들어간다.
+ *
+ * `membershipTypeId`는 `MEMBERSHIP`일 때만 채워진다. @see ADR-014
+ */
+export enum PaymentPurpose {
+  /** 회원권 판매 */
+  MEMBERSHIP = 'MEMBERSHIP',
+  /** PT 계약 */
+  PT_CONTRACT = 'PT_CONTRACT',
+  /** 회원권 양도 수수료 */
+  TRANSFER_FEE = 'TRANSFER_FEE',
+}
+
+/**
  * 결제 기록.
  *
  * 현재는 PG 연동 없이 MANUAL로만 생성된다.
@@ -53,12 +70,22 @@ export class Payment {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ name: 'membership_type_id', type: 'uuid' })
-  membershipTypeId: string;
+  /**
+   * 회원권 판매일 때만 채워진다. PT 계약·양도 수수료는 null이다.
+   *
+   * 예전에는 NOT NULL이라 양도 수수료에 원본 회원권의 종류를 넣어 우회했는데,
+   * **수수료 5만원이 "헬스 12개월" 매출로 집계되는 문제**가 있었다.
+   * 종류를 알아야 하는 것은 `purpose = MEMBERSHIP`인 경우뿐이다.
+   */
+  @Column({ name: 'membership_type_id', type: 'uuid', nullable: true })
+  membershipTypeId: string | null;
 
   @ManyToOne(() => MembershipType)
   @JoinColumn({ name: 'membership_type_id' })
-  membershipType: MembershipType;
+  membershipType: MembershipType | null;
+
+  @Column({ type: 'enum', enum: PaymentPurpose })
+  purpose: PaymentPurpose;
 
   /**
    * 실제 결제 금액.

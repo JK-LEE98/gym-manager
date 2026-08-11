@@ -9,6 +9,7 @@ import {
 import {
   Payment,
   PaymentMethod,
+  PaymentPurpose,
   PaymentStatus,
 } from './entities/payment.entity';
 import { User } from '../users/entities/user.entity';
@@ -114,7 +115,11 @@ export class TransfersService {
           manager.create(Payment, {
             gymId,
             userId: dto.toUserId,
-            membershipTypeId: source.membershipTypeId,
+            // 회원권 판매가 아니므로 종류를 연결하지 않는다.
+            // 예전에는 NOT NULL이라 원본의 종류를 넣었는데,
+            // 그러면 수수료 5만원이 "헬스 12개월" 매출로 잡혔다.
+            membershipTypeId: null,
+            purpose: PaymentPurpose.TRANSFER_FEE,
             amount: dto.fee,
             method: PaymentMethod.MANUAL,
             status: PaymentStatus.COMPLETED,

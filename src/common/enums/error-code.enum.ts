@@ -89,6 +89,13 @@ export enum ErrorCode {
   /** 헬스장이 정한 하루 입장 횟수 초과 */
   DAILY_ENTRY_LIMIT_EXCEEDED = 'DAILY_ENTRY_LIMIT_EXCEEDED',
 
+  // --- PT ---
+  PT_CONTRACT_NOT_FOUND = 'PT_CONTRACT_NOT_FOUND',
+  /** role=TRAINER가 아닌 계정을 담당으로 지정 */
+  INVALID_TRAINER = 'INVALID_TRAINER',
+  /** 이미 취소·완료된 계약에 대한 조작 */
+  INVALID_CONTRACT_STATUS = 'INVALID_CONTRACT_STATUS',
+
   // --- 헬스장 ---
   GYM_NOT_FOUND = 'GYM_NOT_FOUND',
   /** 구독 해지 등으로 비활성화된 헬스장 */
@@ -237,6 +244,19 @@ export const ERROR_METADATA: Record<
     status: HttpStatus.CONFLICT,
     message:
       '오늘 입장 가능 횟수를 초과했습니다. 문제가 있으면 헬스장에 문의해주세요',
+  },
+
+  [ErrorCode.PT_CONTRACT_NOT_FOUND]: {
+    status: HttpStatus.NOT_FOUND,
+    message: '존재하지 않는 PT 계약입니다',
+  },
+  [ErrorCode.INVALID_TRAINER]: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '트레이너로 지정할 수 없는 계정입니다',
+  },
+  [ErrorCode.INVALID_CONTRACT_STATUS]: {
+    status: HttpStatus.CONFLICT,
+    message: '현재 상태에서는 처리할 수 없습니다',
   },
 
   [ErrorCode.GYM_NOT_FOUND]: {
