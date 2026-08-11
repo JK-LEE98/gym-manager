@@ -10,6 +10,7 @@ import { GymsModule } from './gyms/gyms.module';
 import { UsersModule } from './users/users.module';
 import { MembershipsModule } from './memberships/memberships.module';
 import { AttendanceModule } from './attendance/attendance.module';
+import { PTModule } from './pt/pt.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 
@@ -62,6 +63,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     UsersModule,
     MembershipsModule,
     AttendanceModule,
+    PTModule,
   ],
   controllers: [AppController],
   providers: [
