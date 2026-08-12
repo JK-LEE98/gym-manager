@@ -13,6 +13,7 @@ import { AttendanceModule } from './attendance/attendance.module';
 import { PTModule } from './pt/pt.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+import { createDataSource } from './common/database/data-source.factory';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { RolesGuard } from './common/guards/roles.guard';
         // 테스트에서는 쿼리 로그가 출력을 뒤덮어 결과를 읽기 어렵다
         logging: config.get('NODE_ENV') === 'development',
       }),
+      dataSourceFactory: createDataSource,
     }),
 
     // 전역 기본 한도. 인증 엔드포인트는 @Throttle로 더 엄격하게 덮어쓴다.
