@@ -102,6 +102,8 @@ export enum ErrorCode {
   INVALID_SCHEDULE_STATUS = 'INVALID_SCHEDULE_STATUS',
   /** 계약 이용 기간을 벗어난 예약 */
   SCHEDULE_OUT_OF_CONTRACT_RANGE = 'SCHEDULE_OUT_OF_CONTRACT_RANGE',
+  /** 잔여 PT 횟수 없음 */
+  NO_REMAINING_SESSIONS = 'NO_REMAINING_SESSIONS',
 
   // --- 헬스장 ---
   GYM_NOT_FOUND = 'GYM_NOT_FOUND',
@@ -280,6 +282,10 @@ export const ERROR_METADATA: Record<
   [ErrorCode.SCHEDULE_OUT_OF_CONTRACT_RANGE]: {
     status: HttpStatus.BAD_REQUEST,
     message: '계약 이용 기간을 벗어났습니다',
+  },
+  [ErrorCode.NO_REMAINING_SESSIONS]: {
+    status: HttpStatus.CONFLICT,
+    message: '남은 PT 횟수가 없습니다',
   },
 
   [ErrorCode.GYM_NOT_FOUND]: {
