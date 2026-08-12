@@ -95,6 +95,13 @@ export enum ErrorCode {
   INVALID_TRAINER = 'INVALID_TRAINER',
   /** 이미 취소·완료된 계약에 대한 조작 */
   INVALID_CONTRACT_STATUS = 'INVALID_CONTRACT_STATUS',
+  PT_SCHEDULE_NOT_FOUND = 'PT_SCHEDULE_NOT_FOUND',
+  /** 같은 트레이너의 다른 수업과 시간이 겹침. EXCLUDE 제약 위반 @see ADR-014 */
+  SCHEDULE_OVERLAPPED = 'SCHEDULE_OVERLAPPED',
+  /** 이미 완료·노쇼·취소 처리된 수업 */
+  INVALID_SCHEDULE_STATUS = 'INVALID_SCHEDULE_STATUS',
+  /** 계약 이용 기간을 벗어난 예약 */
+  SCHEDULE_OUT_OF_CONTRACT_RANGE = 'SCHEDULE_OUT_OF_CONTRACT_RANGE',
 
   // --- 헬스장 ---
   GYM_NOT_FOUND = 'GYM_NOT_FOUND',
@@ -257,6 +264,22 @@ export const ERROR_METADATA: Record<
   [ErrorCode.INVALID_CONTRACT_STATUS]: {
     status: HttpStatus.CONFLICT,
     message: '현재 상태에서는 처리할 수 없습니다',
+  },
+  [ErrorCode.PT_SCHEDULE_NOT_FOUND]: {
+    status: HttpStatus.NOT_FOUND,
+    message: '존재하지 않는 PT 예약입니다',
+  },
+  [ErrorCode.SCHEDULE_OVERLAPPED]: {
+    status: HttpStatus.CONFLICT,
+    message: '해당 시간에 이미 다른 수업이 있습니다',
+  },
+  [ErrorCode.INVALID_SCHEDULE_STATUS]: {
+    status: HttpStatus.CONFLICT,
+    message: '이미 처리된 수업입니다',
+  },
+  [ErrorCode.SCHEDULE_OUT_OF_CONTRACT_RANGE]: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '계약 이용 기간을 벗어났습니다',
   },
 
   [ErrorCode.GYM_NOT_FOUND]: {
