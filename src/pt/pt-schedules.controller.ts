@@ -10,9 +10,11 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Actor, PTSchedulesService } from './pt-schedules.service';
+import { PTSessionsService } from './pt-sessions.service';
 import {
   CreatePTScheduleDto,
   CreateRecurringScheduleDto,
+  NoShowDto,
   PTScheduleQueryDto,
   PTScheduleResponseDto,
   RecurringScheduleResponseDto,
@@ -38,7 +40,10 @@ function toActor(user: JwtPayload): Actor {
 @ApiTags('PTSchedules')
 @Controller('pt/schedules')
 export class PTSchedulesController {
-  constructor(private readonly service: PTSchedulesService) {}
+  constructor(
+    private readonly service: PTSchedulesService,
+    private readonly sessionsService: PTSessionsService,
+  ) {}
 
   // 고정 경로를 ':id' 보다 먼저 선언해야 UUID로 해석되지 않는다
   @Get('me')
@@ -98,6 +103,22 @@ export class PTSchedulesController {
     return this.service.createRecurring(dto, toActor(user));
   }
 
+  @Roles(Role.TRAINER, Role.OWNER)
+  @Get('unconfirmed')
+  @ApiOperation({
+    summary: '미확인 목록',
+    description:
+      '수업 시간이 지났는데 아무도 확인하지 않은 예약이다. ' +
+      '자정에 일괄 완료 처리하지 않는 대신 놓치지 않게 보여준다. ' +
+      '트레이너는 본인 수업만, OWNER는 전체를 본다.',
+  })
+  @ApiCommonResponse(PTScheduleResponseDto, { isArray: true })
+  findUnconfirmed(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<PTScheduleResponseDto[]> {
+    return this.sessionsService.findUnconfirmed(toActor(user));
+  }
+
   @Roles(Role.OWNER)
   @Get()
   @ApiOperation({
@@ -128,6 +149,51 @@ export class PTSchedulesController {
     @CurrentUser() user: JwtPayload,
   ): Promise<PTScheduleResponseDto> {
     return this.service.update(id, dto, toActor(user));
+  }
+
+  @Roles(Role.TRAINER, Role.OWNER)
+  @Patch(':id/complete')
+  @ResponseMessage('수업이 완료 처리되었습니다')
+  @ApiOperation({
+    summary: '수업 완료 확정',
+    description:
+      '잔여 횟수가 1 차감된다. 시스템은 수업이 실제로 진행됐는지 알 수 없어 ' +
+      '사람이 눌러야만 차감된다. OWNER는 분쟁 시 정정할 수 있다.',
+  })
+  @ApiCommonResponse(PTScheduleResponseDto)
+  @ApiErrorResponse(
+    409,
+    [ErrorCode.INVALID_SCHEDULE_STATUS, ErrorCode.NO_REMAINING_SESSIONS],
+    '이미 처리됨 또는 잔여 횟수 없음',
+  )
+  complete(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<PTScheduleResponseDto> {
+    return this.sessionsService.complete(id, toActor(user));
+  }
+
+  @Roles(Role.TRAINER, Role.OWNER)
+  @Patch(':id/no-show')
+  @ResponseMessage('노쇼 처리되었습니다')
+  @ApiOperation({
+    summary: '노쇼 처리',
+    description:
+      '차감 여부를 트레이너가 정한다. 헬스장·사유마다 다르기 때문이다. ' +
+      'deductSession=false여도 노쇼 이력은 남는다.',
+  })
+  @ApiCommonResponse(PTScheduleResponseDto)
+  @ApiErrorResponse(
+    409,
+    [ErrorCode.INVALID_SCHEDULE_STATUS, ErrorCode.NO_REMAINING_SESSIONS],
+    '이미 처리됨 또는 잔여 횟수 없음',
+  )
+  noShow(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: NoShowDto,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<PTScheduleResponseDto> {
+    return this.sessionsService.noShow(id, dto, toActor(user));
   }
 
   @Patch(':id/cancel')

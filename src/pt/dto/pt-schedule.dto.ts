@@ -3,6 +3,7 @@ import {
   ArrayNotEmpty,
   ArrayUnique,
   IsArray,
+  IsBoolean,
   IsISO8601,
   IsInt,
   IsOptional,
@@ -141,6 +142,17 @@ export class SkippedScheduleDto {
 export class RecurringScheduleResponseDto {
   created: PTScheduleResponseDto[];
   skipped: SkippedScheduleDto[];
+}
+
+export class NoShowDto {
+  /**
+   * 잔여 횟수를 차감할지.
+   *
+   * 헬스장·사유마다 다르고 트레이너 재량이라 매번 입력받는다.
+   * `false`여도 `status`는 `NO_SHOW`로 남아 노쇼 이력이 사라지지 않는다.
+   */
+  @IsBoolean()
+  deductSession: boolean;
 }
 
 export class PTScheduleQueryDto {
