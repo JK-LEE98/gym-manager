@@ -13,12 +13,12 @@ Claude Code, Cowork, 그 외 모든 Claude 인스턴스가 이 파일을 읽고 
 | 계층 | 위치 | 담는 것 |
 |------|------|--------|
 | 항상 로드 | **이 파일** | 항상 참이고, 어기면 손해가 크고, 다른 곳에 없는 규칙 |
-| 필요시 읽기 | Obsidian Vault | 상세 맥락, 설계 근거, 이력, ADR |
+| 필요시 읽기 | `docs/` | 상세 맥락, 설계 근거, 이력, ADR |
 | 사실의 출처 | 실제 파일 | `.env.example`, `package.json`, 코드 |
 
 **추가 전 자문할 것**
 1. 다른 파일에 이미 실행 가능한 형태로 있는가 → 있으면 추가하지 않는다
-2. 자주 바뀌는 정보인가 → Obsidian으로
+2. 자주 바뀌는 정보인가 → `docs/`로
 3. 어겼을 때 실제 손해가 있는가 → 아니면 추가하지 않는다
 
 ---
@@ -59,11 +59,11 @@ Claude Code, Cowork, 그 외 모든 Claude 인스턴스가 이 파일을 읽고 
 
 **gym-manager** — 헬스장 회원관리 백엔드 (취준 포트폴리오 + 창업 MVP 기반)
 **개발자** JK — Spring Boot 백엔드 경력, NestJS 학습 목적 포함
-**Obsidian** `/Users/jk/Documents/Obsidian Vault/gym-manager/`
+**설계 문서** `docs/` — Obsidian Vault로 열어서 본다 (위키링크·그래프 뷰 동작)
 **GitHub** https://github.com/JK-LEE98/gym-manager
 
 ### 스택
-NestJS(TypeScript) · TypeORM · PostgreSQL · JWT · SSE · qrcode · Swagger · Docker · Jest
+NestJS(TypeScript) · TypeORM · PostgreSQL · JWT · qrcode · Swagger · Docker · Jest
 
 ### 아키텍처
 - **모놀리식.** 초기 B2B SaaS 단계에서 MSA는 과도한 복잡성. 트래픽 증가 시 특정 모듈만 분리.
@@ -98,13 +98,15 @@ src/
 
 ## 4. 컨텍스트 유지 규칙 (최우선)
 
-> 대화 컨텍스트는 길어지면 소실된다. Obsidian 문서가 유일한 영속 기억이다.
+> 대화 컨텍스트는 길어지면 소실된다. `docs/` 문서가 유일한 영속 기억이다.
 
 ### 즉시 기록한다 (사용자 요청 없이)
 
+경로는 모두 `docs/` 기준이다.
+
 | 상황 | 기록 위치 |
 |------|----------|
-| 기술 결정이 내려짐 | `ADR/ADR-00N-*.md` |
+| 기술 결정이 내려짐 | `ADR/ADR-0NN-*.md` |
 | 기능 명세 추가·변경 | `기능 명세.md` |
 | 엔드포인트 추가·변경 | `API 명세.md` |
 | Entity/스키마 변경 | `DB 모델링.md` |
@@ -124,7 +126,7 @@ src/
 3. 세션 시작 시 `CLAUDE.md` → `개발 로그.md` → 관련 문서 순으로 읽어 복원한다.
 4. 대화가 길어졌다고 판단되면 미기록 사항을 먼저 정리한다.
 
-> ADR 형식(배경/선택지/결정/이유/결과)과 진행 상태는 Obsidian에서 관리한다. 여기에 중복하지 않는다.
+> ADR 형식(배경/선택지/결정/이유/결과)과 진행 상태는 `docs/`에서 관리한다. 여기에 중복하지 않는다.
 
 ---
 
@@ -141,8 +143,18 @@ src/
 
 코드 변경이 있는 모든 작업(`feat` `fix` `refactor` `design` `chore`)은 이슈를 만든다.
 
-**예외 — `dev`에 직접 커밋**: 레포 내 문서(`CLAUDE.md`, `README`), `.github/` 메타 설정, Obsidian 작업.
+**예외 — `dev`에 직접 커밋**: `docs/`, `CLAUDE.md`, `README`, `.github/` 메타 설정.
 기준은 *애플리케이션 코드에 영향이 없고 리뷰할 로직이 없는 변경*.
+
+> **문서를 `dev`에 직접 커밋하는 이유**: CI가 `pull_request`에만 걸려 있어
+> 문서만 고칠 때는 3분짜리 lint·build·E2E가 돌지 않는다.
+> PR로 올리면 md 한 줄에도 전체 검증이 실행된다.
+>
+> `paths-ignore`로 거르는 방법은 **필수 체크와 충돌**한다. → `향후 과제`
+
+> **설계 변경이 코드와 같은 PR에 들어가야 할 때는 함께 커밋한다.**
+> 예: `feat(pt)` 브랜치에서 `docs/ADR-014`를 함께 수정 →
+> PR 하나에 "무엇을 만들었는지"와 "왜 그렇게 만들었는지"가 같이 보인다.
 
 Claude가 제시할 형식:
 ```
@@ -194,7 +206,7 @@ feat(auth): JWT 인증 및 Auth API 구현
 
 ### ⑤ 정리 — 머지 후
 
-`dev` pull → 로컬 브랜치 삭제 → **Obsidian `개발 로그.md` 진행 상태 갱신.**
+`dev` pull → 로컬 브랜치 삭제 → **`docs/개발 로그.md` 진행 상태 갱신.**
 
 ---
 
