@@ -23,6 +23,7 @@ import {
   ResetPasswordResponseDto,
   UserDetailResponseDto,
 } from './dto/user-response.dto';
+import { applyMemberFilters } from './member-filter.sql';
 
 const BCRYPT_ROUNDS = 10;
 const PG_UNIQUE_VIOLATION = '23505';
@@ -109,6 +110,9 @@ export class UsersService {
     if (query.role) {
       qb.andWhere('user.role = :role', { role: query.role });
     }
+
+    // 상태 탭과 만료 필터. 전부 EXISTS 서브쿼리라 회원이 중복되지 않는다
+    applyMemberFilters(qb, query);
 
     const [users, total] = await qb
       .orderBy('user.createdAt', 'DESC')

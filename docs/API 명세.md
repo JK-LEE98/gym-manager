@@ -321,14 +321,38 @@ Response `204`.
 |---------|------|------|
 | `name` | string | 이름 부분 검색 |
 | `role` | enum | OWNER \| TRAINER \| MEMBER |
-| `membershipStatus` | enum | ACTIVE \| EXPIRED \| NONE |
-| `category` | string | 아래 만료 필터의 대상 카테고리 (`헬스` `락커` …) |
+| `membershipStatus` | enum | ALL \| ACTIVE \| ON_HOLD \| EXPIRING \| EXPIRED \| NONE |
+| `category` | string | 아래 필터의 대상 카테고리 (`헬스` `락커` …) |
 | `expiringInDays` | number | **정확히** N일 남은 회원 |
 | `expiredWithinDays` | number | N일 **이내에** 만료된 회원 |
 | `startedWithinDays` | number | 운동을 시작한 지 N일 이내인 회원 |
 | `page`, `limit` | number | 페이지네이션 |
 
-**만료 연락 대상 뽑기**
+**두 축이 독립이다**
+
+```
+membershipStatus    화면 탭. 사람이 훑어본다
+expiringInDays 등   문자 대상. 정확히 뽑는다
+```
+
+**① 상태 탭** — 실제 헬스장 소프트웨어의 회원 화면 구조다
+
+| 값 | 판정 |
+|----|------|
+| `ALL` | 전체 (기본값) |
+| `ACTIVE` | 오늘이 이용 기간 안. 홀딩 중이 아님 |
+| `ON_HOLD` | 오늘이 홀딩 기간 안 |
+| `EXPIRING` | 만료까지 **14일** 이내 |
+| `EXPIRED` | 이용 기간이 지남. **기간 제한 없이 전부** |
+| `NONE` | 회원권을 한 번도 안 샀거나 전부 취소됨 |
+
+> **`EXPIRED`를 전부 보여준다.** 3년 전에 끊은 사람도 나온다.
+> 화면에서 보는 것은 "이 헬스장을 거쳐간 사람"이고 페이지네이션이 있어 길어도 문제없다.
+
+> **`ON_HOLD`는 `status` 컬럼에 없다.** `MembershipHold`와 날짜로 계산한다(ADR-011).
+> 탭이 하나 늘었다고 상태 컬럼을 만들지 않는다.
+
+**② 문자 대상 뽑기**
 
 ```
 GET /users?category=헬스&expiringInDays=3       D-3 알림 문자 대상
