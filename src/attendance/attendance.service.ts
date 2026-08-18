@@ -8,6 +8,7 @@ import {
   AttendanceResponseDto,
   CheckInResponseDto,
   ManualCheckInDto,
+  MembershipExpiryDto,
 } from './dto/attendance.dto';
 import { Gym } from '../gyms/entities/gym.entity';
 import { User } from '../users/entities/user.entity';
@@ -113,17 +114,17 @@ export class AttendanceService {
     // 이미 통과한 입장의 연장이므로 다시 검사할 이유가 없다.
     if (await this.isWithinGrace(userId, gymId, gym, checkedAt)) {
       const saved = await this.save(userId, gymId, method, checkedAt, true);
-      return CheckInResponseDto.from(saved, user.name, null);
+      return CheckInResponseDto.from(saved, user.name, []);
     }
 
     // ⑤⑥ 홀딩·회원권
-    const daysUntilExpiry = await this.assertCanEnter(userId, gymId);
+    const memberships = await this.assertCanEnter(userId, gymId);
 
     // ⑦ 하루 입장 횟수
     await this.assertWithinDailyLimit(userId, gymId, gym, checkedAt);
 
     const saved = await this.save(userId, gymId, method, checkedAt, false);
-    return CheckInResponseDto.from(saved, user.name, daysUntilExpiry);
+    return CheckInResponseDto.from(saved, user.name, memberships);
   }
 
   /**
@@ -157,12 +158,15 @@ export class AttendanceService {
   }
 
   /**
-   * 입장 가능 여부를 확인하고 만료까지 남은 일수를 돌려준다.
+   * 입장 가능 여부를 확인하고 **카테고리별** 잔여일을 돌려준다.
    *
    * **홀딩 검사가 회원권 검사보다 먼저다.** 홀딩 중이면 회원권은 유효하므로
    * 순서가 바뀌면 "회원권이 없습니다"라는 틀린 안내가 나간다.
    */
-  private async assertCanEnter(userId: string, gymId: string): Promise<number> {
+  private async assertCanEnter(
+    userId: string,
+    gymId: string,
+  ): Promise<MembershipExpiryDto[]> {
     const now = today();
 
     const memberships = await this.membershipRepo.find({
@@ -173,6 +177,7 @@ export class AttendanceService {
         endDate: MoreThanOrEqual(now),
         startDate: LessThanOrEqual(now),
       },
+      relations: { membershipType: true },
       order: { endDate: 'DESC' },
     });
 
@@ -198,8 +203,7 @@ export class AttendanceService {
       throw new BusinessException(ErrorCode.MEMBERSHIP_ON_HOLD);
     }
 
-    // 가장 늦게 끝나는 회원권 기준으로 안내한다
-    return daysUntil(memberships[0].endDate);
+    return summarizeByCategory(memberships);
   }
 
   /**
@@ -286,6 +290,30 @@ export class AttendanceService {
 
     return rows.map((row) => AttendanceResponseDto.from(row));
   }
+}
+
+/**
+ * 카테고리별로 가장 늦은 종료일을 골라 잔여일로 바꾼다.
+ *
+ * 같은 카테고리를 여러 건 보유하면(이어붙이기, ADR-010) 가장 늦은 것이 실제 만료일이다.
+ * `memberships`는 `endDate DESC`로 정렬되어 있어 먼저 나온 것이 그 카테고리의 최댓값이다.
+ */
+function summarizeByCategory(
+  memberships: UserMembership[],
+): MembershipExpiryDto[] {
+  const seen = new Map<string, MembershipExpiryDto>();
+
+  for (const membership of memberships) {
+    const category = membership.membershipType?.category ?? '';
+    if (seen.has(category)) continue;
+
+    seen.set(category, {
+      category,
+      daysUntilExpiry: daysUntil(membership.endDate),
+    });
+  }
+
+  return [...seen.values()];
 }
 
 /** 해당 날짜의 00:00:00 ~ 23:59:59.999 (프로세스 타임존 기준) */

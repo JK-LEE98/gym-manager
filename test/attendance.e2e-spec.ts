@@ -170,7 +170,39 @@ describe('출석 (e2e)', () => {
       const res = await checkIn(await issueQr()).expect(201);
 
       expect(res.body.data.isReentry).toBe(false);
-      expect(res.body.data.daysUntilExpiry).toBe(29);
+      expect(res.body.data.memberships).toEqual([
+        { category: '헬스', daysUntilExpiry: 29 },
+      ]);
+    });
+
+    it('회원권을 여러 개 보유하면 카테고리별로 나온다', async () => {
+      // 하나로 뭉치면 가장 늦게 끝나는 것 기준이라
+      // 락커가 3일 남아도 헬스의 29일로 표시된다 → ADR-015
+      await grant(await createType());
+
+      const lockerRes = await request(app.getHttpServer())
+        .post('/membership-types')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({
+          name: '락커 5일',
+          category: '락커',
+          durationDays: 5,
+          price: 10_000,
+        })
+        .expect(201);
+      await grant(lockerRes.body.data.id);
+
+      const res = await checkIn(await issueQr()).expect(201);
+
+      const byCategory = Object.fromEntries(
+        res.body.data.memberships.map(
+          (m: { category: string; daysUntilExpiry: number }) => [
+            m.category,
+            m.daysUntilExpiry,
+          ],
+        ),
+      );
+      expect(byCategory).toEqual({ 헬스: 29, 락커: 4 });
     });
 
     it('응답에 풀네임이 없고 가운데가 마스킹된다', async () => {
@@ -363,10 +395,10 @@ describe('출석 (e2e)', () => {
       await setEntryPolicy({ reentryGraceMinutes: 30 });
 
       const res = await checkIn(await issueQr()).expect(201);
-      expect(res.body.data.daysUntilExpiry).toBe(29);
+      expect(res.body.data.memberships).toHaveLength(1);
 
       const reentry = await checkIn(await issueQr()).expect(201);
-      expect(reentry.body.data.daysUntilExpiry).toBeNull();
+      expect(reentry.body.data.memberships).toEqual([]);
     });
   });
 

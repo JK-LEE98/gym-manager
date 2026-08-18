@@ -41,6 +41,12 @@ export class ManualCheckInDto {
  * 용도가 다른 화면을 한 응답으로 만족시키려 하면 항상 더 넓은 쪽에 맞춰지고,
  * 보안은 좁은 쪽 기준으로 무너진다. @see ADR-013
  */
+/** 카테고리별 잔여일. 화면: `헬스 87일 · 락커 3일 남았습니다` */
+export class MembershipExpiryDto {
+  category: string;
+  daysUntilExpiry: number;
+}
+
 export class CheckInResponseDto {
   /** `이*규` */
   maskedName: string;
@@ -48,22 +54,26 @@ export class CheckInResponseDto {
   /** 유예 시간 안의 재입장이면 true. 입장 횟수에 세지 않았다는 뜻 */
   isReentry: boolean;
   /**
-   * 만료까지 남은 일수. 재입장이면 회원권 검사를 건너뛰므로 null.
+   * 카테고리별 잔여일. 재입장이면 회원권 검사를 건너뛰므로 빈 배열.
    *
-   * 화면: `회원권이 87일 후에 만료됩니다`
+   * **하나로 뭉치지 않는다.** 가장 늦게 끝나는 회원권 기준으로 합치면
+   * 락커가 3일 남아도 87로 표시된다.
+   *
+   * 락커 만료는 현장에서 문자를 보내지 않고 구두로 전하는데,
+   * 여기에 띄우면 회원이 직접 보게 되어 데스크가 말할 필요가 없어진다. @see ADR-015
    */
-  daysUntilExpiry: number | null;
+  memberships: MembershipExpiryDto[];
 
   static from(
     attendance: Attendance,
     name: string,
-    daysUntilExpiry: number | null,
+    memberships: MembershipExpiryDto[],
   ): CheckInResponseDto {
     const dto = new CheckInResponseDto();
     dto.maskedName = maskName(name);
     dto.checkedAt = attendance.checkedAt;
     dto.isReentry = attendance.isReentry;
-    dto.daysUntilExpiry = daysUntilExpiry;
+    dto.memberships = memberships;
     return dto;
   }
 }

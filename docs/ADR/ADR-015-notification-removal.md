@@ -83,13 +83,47 @@ SSE만 다르다. **"지금 연결되어 있는가"에 기능의 존재 자체�
 
 **대상도 문구도 목적도 다른 두 목록이다.**
 
-### 정확값과 범위를 구분한다
+### 두 축이 독립적으로 필요하다
+
+처음에는 `membershipStatus` 필터(문서에만 있고 미구현)를 **없애려 했으나 잘못된 판단이었다.**
+실제 헬스장 소프트웨어는 **전체 / 활성 / 홀딩 / 임박 / 만료** 탭으로 나뉘어 있다.
 
 ```
-GET /users?category=헬스&expiringInDays=3       정확히 3일 남음
-GET /users?category=헬스&expiredWithinDays=30   30일 이내에 만료됨
+탭       화면에서 훑어본다      "홀딩 중인 사람 누구지?"        → 상태 분류
+정확값   문자 대상을 뽑는다     "오늘 D-3인 사람만"             → 발송용
+```
+
+**용도가 다르므로 둘 다 둔다.**
+
+```
+membershipStatus    ALL | ACTIVE | ON_HOLD | EXPIRING | EXPIRED | NONE
+expiringInDays      정확히 N일 남음
+expiredWithinDays   N일 이내 만료
+category            위 전부에 적용
+```
+
+```
+GET /users?membershipStatus=ON_HOLD             홀딩 탭
+GET /users?category=헬스&expiringInDays=3       D-3 문자 대상
+GET /users?category=헬스&expiredWithinDays=30   복귀 홍보 대상
 GET /users?startedWithinDays=7                  운동 시작 7일차
 ```
+
+**탭의 기준**
+
+| 탭 | 판정 |
+|----|------|
+| `ACTIVE` | 오늘이 이용 기간 안. 홀딩 중이 아님 |
+| `ON_HOLD` | 오늘이 홀딩 기간 안 |
+| `EXPIRING` | 만료까지 **14일** 이내 |
+| `EXPIRED` | 이용 기간이 지남. **기간 제한 없이 전부** |
+| `NONE` | 회원권을 한 번도 안 샀거나 전부 취소됨 |
+
+> **`EXPIRED`를 전부 보여주는 이유**: 화면에서 보는 것은 "이 헬스장을 거쳐간 사람"이고
+> 페이지네이션이 있어 길어도 문제없다. 문자 대상은 `expiredWithinDays`로 따로 뽑는다.
+
+> **`ON_HOLD`는 `status`에 없다.** 홀딩 여부는 `MembershipHold`와 날짜로 계산한다(ADR-011).
+> 탭이 하나 늘었다고 상태 컬럼을 만들지 않는다.
 
 **`expiringInDays`가 범위가 아니라 정확값인 것이 핵심이다.**
 
