@@ -109,6 +109,10 @@ export enum ErrorCode {
   GYM_NOT_FOUND = 'GYM_NOT_FOUND',
   /** 구독 해지 등으로 비활성화된 헬스장 */
   GYM_INACTIVE = 'GYM_INACTIVE',
+
+  // --- 통계 ---
+  /** 조회 시작일이 종료일보다 늦거나 범위가 과도하게 넓음 */
+  INVALID_DATE_RANGE = 'INVALID_DATE_RANGE',
 }
 
 /**
@@ -295,5 +299,9 @@ export const ERROR_METADATA: Record<
   [ErrorCode.GYM_INACTIVE]: {
     status: HttpStatus.FORBIDDEN,
     message: '현재 이용할 수 없는 헬스장입니다',
+  },
+  [ErrorCode.INVALID_DATE_RANGE]: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '조회 기간이 올바르지 않습니다',
   },
 };

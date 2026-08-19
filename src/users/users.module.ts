@@ -6,6 +6,7 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { AuthModule } from '../auth/auth.module';
 import { MembershipsModule } from '../memberships/memberships.module';
+import { StatsModule } from '../stats/stats.module';
 
 @Module({
   imports: [
@@ -14,6 +15,8 @@ import { MembershipsModule } from '../memberships/memberships.module';
     AuthModule,
     // 회원 조회 시 회원권 요약을 함께 반환한다
     MembershipsModule,
+    // 회원 상세에 이용 일수를 함께 반환한다
+    StatsModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],

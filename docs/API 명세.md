@@ -413,6 +413,51 @@ GET /users?startedWithinDays=7                  쿠폰·만족도 조사 대상
 > **N+1 주의**: 회원 목록에 회원권 정보를 함께 노출하므로,
 > `QueryBuilder`로 `leftJoinAndSelect` 하여 단일 쿼리로 조회한다.
 
+### GET /users/:id
+
+목록 응답에 **`attendance` 한 덩어리가 추가된 형태**다.
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "name": "홍길동",
+    "memberships": [
+      { "category": "헬스", "endDate": "2026-08-30", "daysUntilExpiry": 20 },
+      { "category": "락커", "endDate": "2026-11-30", "daysUntilExpiry": 112 }
+    ],
+    "attendance": {
+      "from": "2026-08-01",
+      "to": "2026-08-10",
+      "attendedDays": 4,
+      "usableDays": 10
+    }
+  }
+}
+```
+
+> **`attendance`는 회원권 배열 안이 아니라 밖에 있다.**
+> 출석 기록에는 어느 회원권 때문에 왔는지가 없어 헬스와 락커로 쪼갤 수 없다.
+> 회원권 안에 넣으면 락커에도 `4/10`이 찍히는데, 락커는 회원이 오든 안 오든 점유 중이다.
+> 회원권별로 필요한 것은 남은 일수이고 그것은 `daysUntilExpiry`가 이미 준다.
+
+```
+from        = 현재 이용 중인 회원권 중 가장 이른 startDate
+to          = min(오늘, 가장 늦은 endDate)
+usableDays  = (from ~ to 일수) − 그 기간의 ACTIVE 홀딩 일수
+attendedDays = 그 기간의 출석일 수 (같은 날 여러 번 찍어도 1일)
+```
+
+- 홀딩 중에는 나올 수 없으므로 분모에서 뺀다. 홀딩은 회원권 창에 맞춰 잘라 계산한다
+- 시작일이 미래인 회원권(이어붙이기로 예약된 것)은 `to < from`이 되어 `0 / 0`
+- 이용 중인 회원권이 없으면 `attendance`는 `null`
+
+> **퍼센트로 만들지 않는다.** 헬스장 휴무일을 반영하지 않아 100%가 애초에 불가능한데,
+> 퍼센트로 보여주면 "100%가 정상"이라는 착각이 생긴다. → [[향후 과제]]
+
+> **목록에는 넣지 않는다.** 회원마다 집계 쿼리가 돌아 N+1이 된다. → [[향후 과제]]
+
 ### PATCH /users/:id/role
 
 MEMBER를 TRAINER로 승격하거나 되돌린다.
@@ -1210,26 +1255,55 @@ UPDATE pt_contracts
 
 | Method | Endpoint | 권한 | 설명 |
 |--------|----------|------|------|
+| GET | `/stats/revenue` | OWNER | 월별·목적별 매출 |
 | GET | `/stats/members` | OWNER | 월별 신규 회원 수 |
-| GET | `/stats/attendance` | OWNER | 월별 출석률 |
-| GET | `/stats/revenue` | OWNER | 회원권 종류별 매출 |
-| GET | `/stats/pt` | OWNER | 트레이너별 PT 완료 횟수 |
+| GET | `/stats/trainers` | OWNER | 트레이너별 PT 완료·노쇼 |
 
-**Query 공통**: `year`, `month` (미지정 시 최근 12개월)
+**Query 공통**: `from`, `to` (`YYYY-MM-DD`). 생략 시 최근 12개월
 
-**GET /stats/revenue Response**
+### GET /stats/revenue
+
 ```json
 {
   "success": true,
-  "data": {
-    "totalRevenue": 12400000,
-    "byType": [
-      { "typeName": "3개월권", "count": 24, "revenue": 6480000 },
-      { "typeName": "1개월권", "count": 51, "revenue": 5100000 }
-    ]
-  }
+  "data": [
+    {
+      "month": "2026-08",
+      "total": 12400000,
+      "byPurpose": {
+        "MEMBERSHIP": 11500000,
+        "PT_CONTRACT": 850000,
+        "TRANSFER_FEE": 50000
+      }
+    }
+  ]
 }
 ```
+
+> **결제일 기준으로 판 달에 전액 인식한다.**
+> 8월에 55만원짜리 12개월권을 팔면 8월 매출이 55만원이다.
+> 회계상으로는 월 4.5만원씩 나누는 이연 인식이 맞지만,
+> 데스크가 보고 싶은 것은 "이번 달에 얼마 들어왔나"다. → 향후 과제
+
+> **`purpose`로 나눈다.** 회원권·PT·양도 수수료가 섞이면 어디서 번 돈인지 알 수 없다.
+> 이 분류를 위해 `Payment.purpose`를 추가했다. → ADR-014
+
+### GET /stats/trainers
+
+완료와 **노쇼를 함께** 반환한다. 노쇼가 많은 트레이너는 일정 관리에 문제가 있을 수 있다.
+
+```json
+{
+  "success": true,
+  "data": [
+    { "trainerId": "uuid", "trainerName": "김트레이너", "completed": 42, "noShow": 3 }
+  ]
+}
+```
+
+### ~~GET /stats/attendance~~ — 제거됨
+
+**전체 출석률 대신 회원별 이용 일수를 `GET /users/:id` 응답에 넣는다.** 아래 참고.
 
 > 모든 통계 쿼리는 `WHERE gym_id = ?` 로 시작한다.
 > `gymId`를 각 테이블에 비정규화한 이유가 여기에 있다. → ADR-004
@@ -1248,8 +1322,8 @@ UPDATE pt_contracts
 | 4-1 | PT 계약 | ✅ 완료 (#26) |
 | 4-2 | PT 예약 | ✅ 완료 (#28). EXCLUDE 제약, 반복 등록 |
 | 4-3 | PT 완료·노쇼 | ✅ 완료 (#30). 조건부 UPDATE 동시성 |
-| 5-1 | 만료 관리 (회원 필터) | **다음 차례.** 정확값 필터, 카테고리 구분 |
-| 5-2 | Stats | 매출·출석률 집계 |
+| 5-1 | 만료 관리 (회원 필터) | ✅ 완료 (#32). 정확값 필터, 카테고리 구분 |
+| 5-2 | Stats | **다음 차례** (#35). 매출·신규 회원·트레이너 집계 |
 | 6 | 배포 | 마이그레이션 도입이 선행되어야 함 |
 
 > ~~Notification (SSE)~~ — **제거됨.** → ADR-015

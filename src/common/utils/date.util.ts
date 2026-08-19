@@ -55,6 +55,46 @@ export function daysBetween(from: DateString, to: DateString): number {
   return Math.round((toUtc - fromUtc) / 86_400_000);
 }
 
+/** `'YYYY-MM'` — 통계의 월 그룹 키 */
+export function monthOf(value: DateString): string {
+  return value.slice(0, 7);
+}
+
+/** 그 달의 1일 */
+export function firstDayOfMonth(value: DateString): DateString {
+  return `${monthOf(value)}-01`;
+}
+
+/**
+ * 월 단위 이동.
+ *
+ * **1일에만 쓴다.** `setMonth`는 말일을 넘기면 다음 달로 흘러
+ * `1/31`에 1개월을 더하면 `3/3`이 된다. 1일은 모든 달에 있어 안전하다.
+ */
+export function addMonths(value: DateString, months: number): DateString {
+  const date = parse(value);
+  date.setMonth(date.getMonth() + months);
+  return format(date);
+}
+
+/**
+ * `from`이 속한 달부터 `to`가 속한 달까지의 `'YYYY-MM'` 목록.
+ *
+ * **결제가 없는 달을 0으로 채우기 위해 필요하다.**
+ * 집계 결과만 주면 2월에 매출이 없을 때 2월이 통째로 빠져 차트에 구멍이 난다.
+ */
+export function monthsBetween(from: DateString, to: DateString): string[] {
+  const months: string[] = [];
+  let cursor = firstDayOfMonth(from);
+  const last = monthOf(to);
+
+  while (monthOf(cursor) <= last) {
+    months.push(monthOf(cursor));
+    cursor = addMonths(cursor, 1);
+  }
+  return months;
+}
+
 /**
  * 만료까지 남은 일수. 한국식 D-day 표기와 일치한다.
  *

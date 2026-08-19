@@ -11,6 +11,7 @@ import { UsersModule } from './users/users.module';
 import { MembershipsModule } from './memberships/memberships.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { PTModule } from './pt/pt.module';
+import { StatsModule } from './stats/stats.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { createDataSource } from './common/database/data-source.factory';
@@ -66,6 +67,7 @@ import { createDataSource } from './common/database/data-source.factory';
     MembershipsModule,
     AttendanceModule,
     PTModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [
