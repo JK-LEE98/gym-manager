@@ -12,6 +12,7 @@ import { TokenService } from '../auth/token.service';
 import { RevokeReason } from '../auth/entities/refresh-token.entity';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 import { MembershipsService } from '../memberships/memberships.service';
+import { StatsService } from '../stats/stats.service';
 import {
   ChangePasswordDto,
   CreateUserDto,
@@ -43,6 +44,7 @@ export class UsersService {
     private readonly dataSource: DataSource,
     private readonly tokenService: TokenService,
     private readonly membershipsService: MembershipsService,
+    private readonly statsService: StatsService,
   ) {}
 
   async create(
@@ -138,11 +140,19 @@ export class UsersService {
 
   async findOne(id: string, gymId: string): Promise<UserDetailResponseDto> {
     const user = await this.getInGym(id, gymId);
-    const memberships = await this.membershipsService.summarizeByUsers(
-      [user.id],
-      gymId,
+
+    // 서로 의존하지 않는 두 조회라 병렬로 보낸다
+    const [memberships, attendance] = await Promise.all([
+      this.membershipsService.summarizeByUsers([user.id], gymId),
+      // 이용 일수는 상세에만 붙인다. 목록에 넣으면 회원마다 집계 쿼리가 돈다
+      this.statsService.attendanceSummary(user.id, gymId),
+    ]);
+
+    return UserDetailResponseDto.from(
+      user,
+      memberships.get(user.id) ?? [],
+      attendance,
     );
-    return UserDetailResponseDto.from(user, memberships.get(user.id) ?? []);
   }
 
   async update(

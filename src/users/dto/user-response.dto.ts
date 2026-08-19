@@ -1,6 +1,7 @@
 import { User } from '../entities/user.entity';
 import { Role } from '../../common/enums/role.enum';
 import { UserMembershipResponseDto } from '../../memberships/dto/user-membership.dto';
+import { AttendanceSummaryDto } from '../../stats/dto/stats.dto';
 
 export class UserDetailResponseDto {
   id: string;
@@ -29,9 +30,23 @@ export class UserDetailResponseDto {
    */
   memberships?: UserMembershipResponseDto[];
 
+  /**
+   * 얼마나 나오고 있는가. **상세 조회에만 있다.**
+   *
+   * 회원권 배열 안이 아니라 밖에 있는 이유: 출석 기록에는 어느 회원권 때문에
+   * 왔는지가 없어 헬스와 락커로 쪼갤 수 없다. 안에 넣으면 락커에도 `4/10`이 찍힌다.
+   * 회원권별로 필요한 것은 남은 일수이고 그것은 `daysUntilExpiry`가 이미 준다.
+   *
+   * 목록에 넣지 않는 이유: 회원마다 집계 쿼리가 돌아 N+1이 된다. → 향후 과제
+   *
+   * 이용 중인 회원권이 없으면 `null`.
+   */
+  attendance?: AttendanceSummaryDto | null;
+
   static from(
     user: User,
     memberships?: UserMembershipResponseDto[],
+    attendance?: AttendanceSummaryDto | null,
   ): UserDetailResponseDto {
     const dto = new UserDetailResponseDto();
     dto.id = user.id;
@@ -53,6 +68,10 @@ export class UserDetailResponseDto {
     }
     if (memberships) {
       dto.memberships = memberships;
+    }
+    // 목록 응답에는 필드 자체를 만들지 않는다. null과 "조회하지 않음"은 다르다
+    if (attendance !== undefined) {
+      dto.attendance = attendance;
     }
     return dto;
   }
