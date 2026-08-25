@@ -7,6 +7,7 @@ import { UsersService } from './users.service';
 import { AuthModule } from '../auth/auth.module';
 import { MembershipsModule } from '../memberships/memberships.module';
 import { StatsModule } from '../stats/stats.module';
+import { PTModule } from '../pt/pt.module';
 
 @Module({
   imports: [
@@ -17,6 +18,8 @@ import { StatsModule } from '../stats/stats.module';
     MembershipsModule,
     // 회원 상세에 이용 일수를 함께 반환한다
     StatsModule,
+    // 강등·삭제 전에 미이행 PT 계약을 확인한다
+    PTModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],
