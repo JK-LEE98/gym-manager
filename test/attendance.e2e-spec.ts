@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import request from 'supertest';
 import * as jwt from 'jsonwebtoken';
 import { addDays, today } from '../src/common/utils/date.util';
@@ -26,8 +27,24 @@ describe('출석 (e2e)', () => {
   let ownerToken: string;
   let memberToken: string;
   let memberId: string;
+  let qrSecret: string;
 
   const MEMBER_NAME = '이준규';
+
+  /**
+   * QR 토큰을 위조한다.
+   *
+   * **시크릿을 하드코딩하지 않는다.** `.env.test`의 값을 테스트에 베껴 적으면
+   * 시크릿을 바꾸는 순간 서명 검증에서 먼저 걸려, **정작 검증하려던
+   * `type`·`gymId` 조건에 도달하지 못한 채 다른 이유로 실패한다.**
+   * 앱이 실제로 쓰는 값을 그대로 가져온다.
+   */
+  function forgeQr(
+    payload: Record<string, unknown>,
+    expiresIn: number,
+  ): string {
+    return jwt.sign(payload, qrSecret, { expiresIn });
+  }
 
   async function createType(holdingLimit = 0): Promise<string> {
     const res = await request(app.getHttpServer())
@@ -86,6 +103,7 @@ describe('출석 (e2e)', () => {
 
   beforeAll(async () => {
     app = await createTestApp();
+    qrSecret = app.get(ConfigService).getOrThrow<string>('JWT_QR_SECRET');
   });
 
   afterAll(async () => {
@@ -129,10 +147,9 @@ describe('출석 (e2e)', () => {
 
     it('QR 시크릿으로 서명했더라도 type이 다르면 거부된다', async () => {
       // 시크릿 설정이 잘못되는 상황까지 대비한 두 번째 방어선
-      const forged = jwt.sign(
+      const forged = forgeQr(
         { sub: memberId, gymId: TEST_GYM.id, type: 'ACCESS' },
-        'test-qr-secret',
-        { expiresIn: 30 },
+        30,
       );
 
       const res = await checkIn(forged).expect(401);
@@ -141,20 +158,22 @@ describe('출석 (e2e)', () => {
     });
 
     it('만료된 QR은 거부된다', async () => {
-      const expired = jwt.sign(
+      const expired = forgeQr(
         { sub: memberId, gymId: TEST_GYM.id, type: 'ATTENDANCE' },
-        'test-qr-secret',
-        { expiresIn: -1 },
+        -1,
       );
 
-      await checkIn(expired).expect(401);
+      const res = await checkIn(expired).expect(401);
+
+      // 코드까지 확인한다. 401만 보면 서명 실패로 떨어져도 통과해
+      // "만료를 검증한다"는 이 테스트의 목적이 조용히 사라진다
+      expect(res.body.errorCode).toBe('QR_TOKEN_EXPIRED');
     });
 
     it('다른 헬스장의 QR은 거부된다', async () => {
-      const otherGymQr = jwt.sign(
+      const otherGymQr = forgeQr(
         { sub: memberId, gymId: OTHER_GYM.id, type: 'ATTENDANCE' },
-        'test-qr-secret',
-        { expiresIn: 30 },
+        30,
       );
 
       const res = await checkIn(otherGymQr).expect(403);
