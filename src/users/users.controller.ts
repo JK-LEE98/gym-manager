@@ -149,7 +149,8 @@ export class UsersController {
   @ApiOperation({
     summary: '역할 변경',
     description:
-      'MEMBER ↔ TRAINER 만 가능하다. TRAINER 승격 시 프로필이 자동 생성되고, 강등 시 삭제된다.',
+      'MEMBER ↔ TRAINER 만 가능하다. TRAINER 승격 시 프로필이 자동 생성되고, 강등 시 삭제된다. ' +
+      '진행 중인 PT 계약이 있는 트레이너는 강등할 수 없다.',
   })
   @ApiCommonResponse(UserDetailResponseDto, {
     message: '역할이 변경되었습니다',
@@ -158,6 +159,11 @@ export class UsersController {
     400,
     [ErrorCode.INVALID_ROLE_CHANGE],
     'OWNER·SUPER_ADMIN은 변경 불가',
+  )
+  @ApiErrorResponse(
+    409,
+    [ErrorCode.TRAINER_HAS_ACTIVE_CONTRACT],
+    '잔여 계약이 있는 트레이너. 계약을 먼저 취소해야 한다',
   )
   updateRole(
     @Param('id', ParseUUIDPipe) id: string,
@@ -191,8 +197,17 @@ export class UsersController {
   @ApiOperation({
     summary: '회원 삭제',
     description:
-      'soft delete. 출석·회원권 이력이 참조하므로 물리 삭제하지 않는다.',
+      'soft delete. 출석·회원권 이력이 참조하므로 물리 삭제하지 않는다. ' +
+      '진행 중인 PT 계약이 있으면 회원·트레이너 어느 쪽도 삭제할 수 없다.',
   })
+  @ApiErrorResponse(
+    409,
+    [
+      ErrorCode.TRAINER_HAS_ACTIVE_CONTRACT,
+      ErrorCode.MEMBER_HAS_ACTIVE_CONTRACT,
+    ],
+    '잔여 계약이 남은 계정',
+  )
   remove(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser('gymId') gymId: string,

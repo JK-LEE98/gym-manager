@@ -149,6 +149,33 @@ export class PTContractsService {
     return this.findOne(id, gymId);
   }
 
+  /**
+   * 이 계정에 **아직 이행되지 않은 계약**이 남아 있는가.
+   *
+   * 계정을 강등·삭제하기 전에 확인한다. 계약이 조용히 증발하면
+   * 회원은 돈을 냈는데 잔여 횟수를 쓸 방법이 없어진다.
+   *
+   * **`ACTIVE`만 본다.** `COMPLETED`(잔여 소진)와 `CANCELLED`(환불·착오)는
+   * 이미 끝난 계약이라 막을 이유가 없다.
+   *
+   * @param role 트레이너로서 볼지, 회원으로서 볼지. 같은 계정이 양쪽일 수는 없다
+   */
+  async hasActiveContract(
+    userId: string,
+    role: Role.TRAINER | Role.MEMBER,
+    gymId: string,
+  ): Promise<boolean> {
+    return await this.contractRepo.exists({
+      where: {
+        gymId,
+        status: PTContractStatus.ACTIVE,
+        ...(role === Role.TRAINER
+          ? { trainerId: userId }
+          : { memberId: userId }),
+      },
+    });
+  }
+
   private async findBy(
     where: FindOptionsWhere<PTContract>,
   ): Promise<PTContractResponseDto[]> {

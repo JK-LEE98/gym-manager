@@ -104,6 +104,10 @@ export enum ErrorCode {
   SCHEDULE_OUT_OF_CONTRACT_RANGE = 'SCHEDULE_OUT_OF_CONTRACT_RANGE',
   /** 잔여 PT 횟수 없음 */
   NO_REMAINING_SESSIONS = 'NO_REMAINING_SESSIONS',
+  /** 진행 중인 계약이 있는 트레이너를 강등·삭제하려 함 */
+  TRAINER_HAS_ACTIVE_CONTRACT = 'TRAINER_HAS_ACTIVE_CONTRACT',
+  /** 진행 중인 계약이 있는 회원을 삭제하려 함 */
+  MEMBER_HAS_ACTIVE_CONTRACT = 'MEMBER_HAS_ACTIVE_CONTRACT',
 
   // --- 헬스장 ---
   GYM_NOT_FOUND = 'GYM_NOT_FOUND',
@@ -299,6 +303,16 @@ export const ERROR_METADATA: Record<
   [ErrorCode.GYM_INACTIVE]: {
     status: HttpStatus.FORBIDDEN,
     message: '현재 이용할 수 없는 헬스장입니다',
+  },
+  [ErrorCode.TRAINER_HAS_ACTIVE_CONTRACT]: {
+    status: HttpStatus.CONFLICT,
+    message:
+      '진행 중인 PT 계약이 있어 변경할 수 없습니다. 계약을 먼저 정리해주세요',
+  },
+  [ErrorCode.MEMBER_HAS_ACTIVE_CONTRACT]: {
+    status: HttpStatus.CONFLICT,
+    message:
+      '잔여 PT 횟수가 남아 있어 삭제할 수 없습니다. 계약을 먼저 정리해주세요',
   },
   [ErrorCode.INVALID_DATE_RANGE]: {
     status: HttpStatus.BAD_REQUEST,

@@ -58,6 +58,9 @@ Authorization: Bearer {accessToken}
 | 409 | SCHEDULE_OVERLAPPED | 트레이너 일정 겹침 (EXCLUDE 제약 위반) |
 | 409 | ALREADY_CONFIRMED | 이미 완료·노쇼 처리된 수업 |
 | 409 | NO_REMAINING_SESSIONS | PT 잔여 횟수 없음 |
+| 409 | TRAINER_HAS_ACTIVE_CONTRACT | 진행 중인 계약이 있는 트레이너의 강등·삭제 |
+| 409 | MEMBER_HAS_ACTIVE_CONTRACT | 잔여 PT 횟수가 남은 회원의 삭제 |
+| 400 | INVALID_DATE_RANGE | 통계 조회 기간 오류 (역순 또는 60개월 초과) |
 
 ### 페이지네이션 (목록 API 공통)
 
@@ -471,6 +474,26 @@ MEMBER를 TRAINER로 승격하거나 되돌린다.
 **제약**
 - OWNER로의 변경 불가 (OWNER는 SUPER_ADMIN만 발급)
 - TRAINER → MEMBER 강등 시, 진행 중인 `PTContract`가 있으면 `409 TRAINER_HAS_ACTIVE_CONTRACT`
+
+> **검사는 트랜잭션 밖에서 한다.** 안에 넣으면 `TrainerProfile`을 지운 뒤
+> 예외가 나서 롤백되는 순서가 생긴다. 결과는 같지만 불필요한 쓰기가 남아
+> 나중에 사고를 조사할 때 "지웠다가 되돌림"이 로그에 보인다.
+
+> **막기만 하고 대안을 주지 않는다.** 트레이너를 그만두게 하려면
+> `PATCH /pt/contracts/:id/cancel` → 강등, 두 단계를 밟아야 한다.
+> 트레이너 변경 기능이 아직 없기 때문이다. → [[향후 과제]]
+
+### DELETE /users/:id
+
+soft delete. 출석·회원권 이력이 참조하므로 물리 삭제하지 않는다.
+
+**제약**
+- OWNER 계정은 삭제 불가
+- 진행 중인 `PTContract`가 있으면 `409` — 트레이너는 `TRAINER_HAS_ACTIVE_CONTRACT`, 회원은 `MEMBER_HAS_ACTIVE_CONTRACT`
+
+> **삭제가 강등보다 나쁘다.** 강등은 재승격으로 되돌릴 수 있지만(프로필은 잃는다),
+> soft delete된 계정에 걸린 계약은 조회에서 통째로 사라진다.
+> 회원 쪽도 같다. 잔여 횟수가 남은 회원을 지우면 **돈을 받은 수업이 증발한다.**
 
 ### PATCH /users/:id/reset-password
 

@@ -13,6 +13,7 @@ import { RevokeReason } from '../auth/entities/refresh-token.entity';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 import { MembershipsService } from '../memberships/memberships.service';
 import { StatsService } from '../stats/stats.service';
+import { PTContractsService } from '../pt/pt-contracts.service';
 import {
   ChangePasswordDto,
   CreateUserDto,
@@ -37,6 +38,9 @@ const TEMP_PASSWORD_LENGTH = 10;
 /** 역할 변경이 허용되는 조합. OWNER·SUPER_ADMIN은 어느 쪽으로도 바꿀 수 없다 */
 const CHANGEABLE_ROLES: readonly Role[] = [Role.MEMBER, Role.TRAINER];
 
+/** PT 계약의 두 당사자. 계약 확인 시 어느 쪽으로 볼지 결정한다 */
+type PTParty = Role.TRAINER | Role.MEMBER;
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -45,6 +49,7 @@ export class UsersService {
     private readonly tokenService: TokenService,
     private readonly membershipsService: MembershipsService,
     private readonly statsService: StatsService,
+    private readonly contractsService: PTContractsService,
   ) {}
 
   async create(
@@ -221,6 +226,12 @@ export class UsersService {
       return UserDetailResponseDto.from(user);
     }
 
+    // 강등은 TrainerProfile을 지우고 담당 관계를 끊는다.
+    // 계약이 남은 채로 통과시키면 회원이 잔여 횟수를 쓸 방법이 없어진다
+    if (user.role === Role.TRAINER) {
+      await this.assertNoActiveContract(id, Role.TRAINER, gymId);
+    }
+
     return await this.dataSource.transaction(async (manager) => {
       await manager.update(User, id, { role: dto.role });
 
@@ -311,8 +322,38 @@ export class UsersService {
       );
     }
 
+    // 삭제는 강등보다 나쁘다. 강등은 재승격으로 되돌릴 수 있지만
+    // soft delete된 계정에 걸린 계약은 조회에서 통째로 사라진다
+    await this.assertNoActiveContract(id, user.role as PTParty, gymId);
+
     await this.userRepo.softDelete(id);
     await this.tokenService.revokeAllByUser(id, RevokeReason.SECURITY);
+  }
+
+  /**
+   * 미이행 PT 계약이 남아 있으면 막는다.
+   *
+   * **막기만 하고 대안을 주지 않는다.** 트레이너를 정말 그만두게 하려면
+   * 계약을 먼저 취소해야 한다. 트레이너 변경 기능이 아직 없기 때문인데,
+   * 계약이 조용히 증발하는 것보다는 두 단계를 밟게 하는 편이 낫다. → 향후 과제
+   */
+  private async assertNoActiveContract(
+    userId: string,
+    role: PTParty,
+    gymId: string,
+  ): Promise<void> {
+    const hasContract = await this.contractsService.hasActiveContract(
+      userId,
+      role,
+      gymId,
+    );
+    if (!hasContract) return;
+
+    throw new BusinessException(
+      role === Role.TRAINER
+        ? ErrorCode.TRAINER_HAS_ACTIVE_CONTRACT
+        : ErrorCode.MEMBER_HAS_ACTIVE_CONTRACT,
+    );
   }
 
   /**
