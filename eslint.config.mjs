@@ -6,7 +6,17 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs'],
+    ignores: [
+      'eslint.config.mjs',
+      // 마이그레이션은 `migration:generate`가 만든 생성물이다.
+      //
+      // prettier로 재포맷하면 generate가 내는 모양과 달라져,
+      // 다음에 생성했을 때 의미 없는 diff가 섞인다.
+      // lint의 목적은 사람이 쓴 코드의 문제를 잡는 것이라 여기엔 해당이 없다.
+      //
+      // SQL 한 줄이 24KB에 달해 재포맷 자체가 위험하기도 하다.
+      'src/common/database/migrations/**',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

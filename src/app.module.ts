@@ -14,7 +14,6 @@ import { PTModule } from './pt/pt.module';
 import { StatsModule } from './stats/stats.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
-import { createDataSource } from './common/database/data-source.factory';
 import {
   envValidationOptions,
   envValidationSchema,
@@ -45,15 +44,24 @@ import {
         password: config.get('DB_PASSWORD'),
         database: config.get('DB_DATABASE'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        // 운영에서는 절대 켜지 않는다. 컬럼 삭제·타입 변경 시 데이터가 소실될 수 있다.
-        // 운영 배포 시 마이그레이션으로 전환한다 → 향후 과제
-        synchronize: ['development', 'test'].includes(
-          config.get<string>('NODE_ENV') ?? '',
-        ),
+        migrations: [__dirname + '/common/database/migrations/*{.ts,.js}'],
+
+        // **모든 환경에서 끈다.** 컬럼 삭제·타입 변경 시 데이터가 소실된다.
+        //
+        // 개발·테스트도 예외를 두지 않는 이유: 켜두면 Entity를 고칠 때
+        // synchronize가 알아서 맞춰줘 **마이그레이션을 만들지 않아도 테스트가 통과한다.**
+        // 그러면 운영을 지키려고 만든 마이그레이션이 한 번도 검증되지 않는다.
+        synchronize: false,
+
+        // 스키마는 마이그레이션이 만든다. 이미 적용된 것은 건너뛰므로 매 기동이 안전하다.
+        //
+        // 확장 설치도 마이그레이션 안으로 들어갔다.
+        // 확장은 스키마의 일부이고, 앱이 처음 붙기 전에 이미 있어야 한다.
+        migrationsRun: true,
+
         // 테스트에서는 쿼리 로그가 출력을 뒤덮어 결과를 읽기 어렵다
         logging: config.get('NODE_ENV') === 'development',
       }),
-      dataSourceFactory: createDataSource,
     }),
 
     // 전역 기본 한도. 인증 엔드포인트는 @Throttle로 더 엄격하게 덮어쓴다.
