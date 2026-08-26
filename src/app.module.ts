@@ -15,6 +15,10 @@ import { StatsModule } from './stats/stats.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { createDataSource } from './common/database/data-source.factory';
+import {
+  envValidationOptions,
+  envValidationSchema,
+} from './common/config/env.validation';
 
 @Module({
   imports: [
@@ -24,6 +28,9 @@ import { createDataSource } from './common/database/data-source.factory';
       isGlobal: true,
       // 테스트는 별도 DB를 바라봐야 개발 데이터를 지우지 않는다
       envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
+      // 형식이 틀린 값은 여기서 막는다. getOrThrow는 존재 여부만 보기 때문이다
+      validationSchema: envValidationSchema,
+      validationOptions: envValidationOptions,
     }),
 
     // Spring의 DataSource + JPA 설정 역할
