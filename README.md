@@ -39,6 +39,7 @@
 | [013](docs/ADR/ADR-013-attendance-qr.md) | QR 출석 — 검증 순서와 재출입 |
 | [014](docs/ADR/ADR-014-pt-design.md) | PT — EXCLUDE 제약, 조건부 UPDATE |
 | [015](docs/ADR/ADR-015-notification-removal.md) | **알림 제거** — Pull과 Push의 차이 |
+| [016](docs/ADR/ADR-016-migration.md) | 마이그레이션 도입 — `synchronize`를 전 환경에서 끈다 |
 
 ## 개발
 
@@ -48,6 +49,8 @@ npm run seed                      # SUPER_ADMIN + 테스트 Gym
 npm run start:dev                 # http://localhost:3000
                                   # Swagger: /api-docs
 ```
+
+첫 기동 때 **마이그레이션이 스키마를 만든다.** `synchronize`는 모든 환경에서 꺼져 있다. → ADR-016
 
 ### 검증 루프
 
@@ -59,3 +62,27 @@ npm run test:e2e   # E2E (테스트 DB 5433 필요)
 ```
 
 CI가 PR마다 실행하는 것과 같은 명령이다. → [학습 노트](docs/학습%20노트.md)
+
+### 스키마 변경
+
+**Entity를 고치면 마이그레이션 생성이 의무다.** 잊으면 CI의 `migration:check`가 잡는다.
+
+```bash
+npm run migration:generate   # Entity와 현재 DB의 차이로 파일 생성
+npm run migration:run        # 미적용 마이그레이션 실행
+npm run migration:show       # 적용 현황
+npm run migration:check      # 차이가 남아 있으면 종료 코드 1
+```
+
+## 브랜치
+
+```
+feat/xxx  →  dev  →  main
+   PR         PR       ↑
+                  운영 배포 시점
+```
+
+`dev`가 통합 브랜치, **`main`은 "지금 운영에 떠 있는 것"** 이다.
+배포마다 `dev → main` PR과 태그가 남는다. → [아키텍처 7장](docs/아키텍처.md)
+
+`docs/`·`README`·`.github/`는 리뷰할 로직이 없으므로 `dev`에 직접 커밋한다.
