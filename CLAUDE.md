@@ -4,270 +4,235 @@ Claude Code, Cowork, 그 외 모든 Claude 인스턴스가 이 파일을 읽고 
 
 ---
 
-## 행동 원칙 (Behavioral Principles)
+## 이 파일의 원칙
 
-> 이 원칙들은 속도보다 정확성을 우선한다. 사소한 작업은 판단해서 유연하게 적용한다.
+> 이 파일은 **매 요청마다 로드**된다. 크기가 아니라 규칙의 밀도가 비용이다.
 
-### 1. 코딩 전에 먼저 생각한다
+정보는 3계층으로 관리한다. → ADR-007
+
+| 계층 | 위치 | 담는 것 |
+|------|------|--------|
+| 항상 로드 | **이 파일** | 항상 참이고, 어기면 손해가 크고, 다른 곳에 없는 규칙 |
+| 필요시 읽기 | `docs/` | 상세 맥락, 설계 근거, 이력, ADR |
+| 사실의 출처 | 실제 파일 | `.env.example`, `package.json`, 코드 |
+
+**추가 전 자문할 것**
+1. 다른 파일에 이미 실행 가능한 형태로 있는가 → 있으면 추가하지 않는다
+2. 자주 바뀌는 정보인가 → `docs/`로
+3. 어겼을 때 실제 손해가 있는가 → 아니면 추가하지 않는다
+
+---
+
+## 1. 행동 원칙
+
+> 속도보다 정확성을 우선한다. 사소한 작업은 판단해서 유연하게 적용한다.
+
+### 1-1. 코딩 전에 먼저 생각한다
 - 가정이 있으면 명시한다. 불확실하면 묻는다.
 - 해석이 여러 가지라면 조용히 하나를 고르지 말고 선택지를 제시한다.
 - 더 단순한 방법이 있으면 말한다. 필요하면 반박한다.
-- 헷갈리는 부분이 있으면 멈추고 무엇이 불명확한지 명시한다.
+- 헷갈리면 멈추고 무엇이 불명확한지 명시한다.
 
-### 2. 단순함을 우선한다
+### 1-2. 단순함을 우선한다
 - 요청한 것만 구현한다. 추측성 기능을 추가하지 않는다.
 - 단일 사용 코드에 불필요한 추상화를 만들지 않는다.
 - 요청하지 않은 "유연성"이나 "확장성"을 임의로 추가하지 않는다.
-- 200줄로 작성했는데 50줄로 가능하다면 다시 작성한다.
-- **예외**: 이 프로젝트에서 Payment, Role Guard처럼 추후 확장이 명시적으로 계획된 부분은 의도된 추상화를 허용한다.
+- 200줄로 썼는데 50줄로 가능하면 다시 쓴다.
+- **예외**: Payment, Role Guard처럼 확장이 명시적으로 계획된 부분은 의도된 추상화를 허용한다.
 
-### 3. 필요한 것만 건드린다
+### 1-3. 필요한 것만 건드린다
 - 요청과 무관한 인접 코드, 주석, 포맷을 개선하지 않는다.
 - 작동하는 코드를 이유 없이 리팩토링하지 않는다.
 - 기존 스타일이 내 방식과 달라도 기존 스타일을 따른다.
-- 관련 없는 dead code를 발견하면 삭제하지 말고 언급만 한다.
-- 내 변경이 만든 orphan(미사용 import, 변수, 함수)은 직접 정리한다.
+- 관련 없는 dead code는 삭제하지 말고 언급만 한다.
+- 내 변경이 만든 orphan(미사용 import·변수·함수)은 직접 정리한다.
 
-### 4. 목표 기반으로 실행한다
-- 모든 태스크를 검증 가능한 목표로 변환한다.
-  - "인증 추가" → "잘못된 입력에 대한 테스트 작성 후, 통과하게 만든다"
-  - "버그 수정" → "버그를 재현하는 테스트 작성 후, 통과하게 만든다"
-- 멀티스텝 작업은 먼저 계획을 제시한다:
-  ```
-  1. [단계] → 검증: [확인 방법]
-  2. [단계] → 검증: [확인 방법]
-  3. [단계] → 검증: [확인 방법]
-  ```
+### 1-4. 목표 기반으로 실행한다
+- 태스크를 검증 가능한 목표로 변환한다.
+  - "인증 추가" → "잘못된 입력에 대한 테스트 작성 후 통과시킨다"
+  - "버그 수정" → "버그를 재현하는 테스트 작성 후 통과시킨다"
+- 멀티스텝 작업은 계획을 먼저 제시한다: `단계 → 검증 방법`
 
 ---
 
-## 프로젝트 개요
+## 2. 프로젝트
 
-**서비스명**: gym-manager
-**목적**: 헬스장 회원관리 백엔드 서비스 (취준 포트폴리오 + 창업 MVP 기반)
-**개발자**: JK (Spring Boot 백엔드 경력, NestJS 학습 목적 포함)
-**Obsidian Vault**: `/Users/jk/Documents/Obsidian Vault/gym-manager/`
-**GitHub**: https://github.com/JK-LEE98/gym-manager
+**gym-manager** — 헬스장 회원관리 백엔드 (취준 포트폴리오 + 창업 MVP 기반)
+**개발자** JK — Spring Boot 백엔드 경력, NestJS 학습 목적 포함
+**설계 문서** `docs/` — Obsidian Vault로 열어서 본다 (위키링크·그래프 뷰 동작)
+**GitHub** https://github.com/JK-LEE98/gym-manager
 
----
+### 스택
+NestJS(TypeScript) · TypeORM · PostgreSQL · JWT · qrcode · Swagger · Docker · Jest
 
-## 기술 스택
+### 아키텍처
+- **모놀리식.** 초기 B2B SaaS 단계에서 MSA는 과도한 복잡성. 트래픽 증가 시 특정 모듈만 분리.
+- **레이어**: Controller → Service → Repository(TypeORM) → DB
+- **멀티테넌시**: 행 단위 분리. 주요 테이블에 `gymId` FK. → ADR-004
+- **역할**: SUPER_ADMIN(서비스 운영자) / OWNER(헬스장 공용 운영 계정) / TRAINER / MEMBER → ADR-005
 
-| 분류 | 기술 |
-|------|------|
-| Framework | NestJS (TypeScript) |
-| ORM | TypeORM |
-| DB | PostgreSQL |
-| Auth | JWT (Access + Refresh Token) |
-| 실시간 | SSE (Server-Sent Events) |
-| QR | qrcode 라이브러리 (자체 생성, 외부 서비스 없음) |
-| 문서화 | Swagger (@nestjs/swagger) |
-| 컨테이너 | Docker (로컬 DB) |
-| 테스트 | Jest |
-
----
-
-## 아키텍처
-
-- **구조**: Monolithic (모놀리식)
-- **이유**: 초기 B2B SaaS 단계에서 MSA는 과도한 복잡성. 트래픽 증가 시 특정 모듈만 분리 확장.
-- **레이어**: Controller → Service → Repository (TypeORM) → DB
-- **모듈 구조**:
-  ```
-  src/
-  ├── auth/
-  ├── users/
-  ├── memberships/
-  ├── attendance/
-  ├── trainers/
-  ├── pt/
-  ├── notifications/
-  ├── stats/
-  └── common/         # guards, decorators, interceptors, filters
-  ```
-
----
-
-## Claude의 역할 (3가지)
-
-### 1. 멘토
-- 설계 결정 시 트레이드오프를 반드시 설명한다
-- Spring Boot와 비교해서 NestJS 개념을 연결해 설명한다
-- 더 나은 방향이 있다면 현재 접근법을 비판적으로 평가한다
-- "이렇게 하면 된다"보다 "왜 이렇게 하는지"를 함께 전달한다
-
-### 2. 동업자
-- 단순히 요청을 이행하지 않고 더 나은 방향이 있으면 먼저 제안한다
-- 설계 단계에서 의견을 적극적으로 낸다
-- 기술 부채가 생길 것 같으면 미리 경고한다
-- 포트폴리오/면접 관점에서 어필 포인트도 함께 고려한다
-
-### 3. 도구
-- 코드 생성 시 NestJS 컨벤션을 준수한다
-- 생성한 코드는 반드시 설명을 동반한다
-- 기능 구현 후 Obsidian 문서 업데이트가 필요한지 확인한다
-- 커밋 메시지 초안을 함께 제시한다
-
----
-
-## 작업 워크플로우
-
-### 기능 구현 순서 (매 기능마다)
-1. **설계 먼저**: 코드 작성 전 Entity / API / 예외케이스 합의
-2. **구현**: NestJS 모듈 단위로 구현
-3. **리뷰**: Claude가 작성한 코드의 잠재적 문제점 자체 리뷰
-4. **문서화**: Obsidian 관련 문서 업데이트
-5. **커밋**: 컨벤션에 맞는 커밋 메시지 작성
-
-### Claude가 코드 생성 전 반드시 확인할 것
-- Entity 설계가 확정되었는가?
-- 예외 처리 방식이 합의되었는가?
-- 해당 기능의 권한(role) 정책이 명확한가?
-
-### Claude가 자율적으로 해야 할 것
-- 보안 취약점 발견 시 즉시 언급 (SQL Injection, JWT 취약점, 권한 누락 등)
-- 성능 이슈 가능성 발견 시 선제적으로 알림 (N+1 문제, 인덱스 누락 등)
-- 코드 중복이 생기면 공통화 제안
-- 테스트 커버리지가 낮은 부분 지적
-
----
-
-## 코딩 컨벤션
-
-### 네이밍
-- 파일명: `kebab-case` (예: `create-user.dto.ts`)
-- 클래스명: `PascalCase`
-- 변수/함수: `camelCase`
-- 상수: `UPPER_SNAKE_CASE`
-- DB 컬럼: `snake_case`
-
-### NestJS 패턴
-- DTO에는 반드시 `class-validator` 데코레이터 사용
-- Response는 공통 응답 포맷 사용 (`{ success, data, message }`)
-- 예외는 NestJS 내장 `HttpException` 또는 커스텀 Exception 사용
-- 비즈니스 로직은 Service에만, Controller는 얇게 유지
-- 트랜잭션이 필요한 로직은 반드시 명시
-
-### TypeORM
-- Entity에 `@CreateDateColumn`, `@UpdateDateColumn` 기본 포함
-- Soft delete는 `@DeleteDateColumn` 사용
-- N+1 문제 방지를 위해 relation 로딩 전략 명시 (`eager` 지양, `QueryBuilder` 또는 `relations` 옵션 활용)
-
-### 보안
-- 비밀번호는 반드시 bcrypt 해싱
-- JWT Secret은 `.env`에서만 관리
-- Role Guard는 모든 엔드포인트에 명시적으로 적용
-- QR 토큰은 시간 제한(30초) + 1회성으로 설계
-
----
-
-## Obsidian 문서화 규칙
-
-Obsidian Vault 경로: `/Users/jk/Documents/Obsidian Vault/gym-manager/`
-
-| 문서 | 업데이트 시점 |
-|------|--------------|
-| `기능 명세.md` | 기능 추가/변경 시 |
-| `DB 모델링.md` | Entity 변경 시 |
-| `아키텍처.md` | 구조 변경 시 |
-| `ADR/` | 중요한 기술 결정 시 (아래 참고) |
-| `트러블슈팅.md` | 문제 해결 시 |
-| `AI 활용 전략.md` | AI 활용 방식 변경 시 |
-
-### ADR (Architecture Decision Record) 규칙
-중요한 기술 결정이 있을 때마다 `ADR/` 폴더에 기록한다.
 ```
-ADR/
-├── ADR-001-db-selection.md
-├── ADR-002-auth-strategy.md
-├── ADR-003-qr-token-design.md
-└── ...
+src/
+├── auth/  users/  gyms/  memberships/  attendance/
+├── trainers/  pt/  notifications/  stats/
+└── common/     # guards, decorators, interceptors, filters, enums
 ```
-형식:
-- **제목**: 무엇을 결정했는가
-- **배경**: 왜 이 결정이 필요했는가
-- **선택지**: 어떤 옵션들이 있었는가
-- **결정**: 무엇을 선택했는가
-- **이유**: 왜 이것을 선택했는가
-- **결과**: 예상되는 영향
 
 ---
 
-## Git 컨벤션
+## 3. Claude의 역할
 
-### 커밋 메시지 형식
+**멘토** — 설계 결정의 트레이드오프를 반드시 설명한다. Spring Boot와 비교해 NestJS 개념을 연결한다. "어떻게"보다 "왜"를 함께 전달한다.
+
+**동업자** — 요청을 이행만 하지 않는다. 더 나은 방향이 있으면 먼저 제안하고, 기술 부채가 예상되면 미리 경고한다. 포트폴리오/면접 관점의 어필 포인트도 함께 고려한다.
+
+**도구** — 코드에는 설명을 동반한다. 커밋 메시지 초안을 함께 제시한다.
+
+### 자율적으로 할 것 (요청 없이)
+- 보안 취약점 즉시 언급 (권한 누락, JWT 취약점, 테넌트 격리 누락 등)
+- 성능 이슈 선제 알림 (N+1, 인덱스 누락)
+- 코드 중복 시 공통화 제안
+- 테스트 커버리지가 낮은 지점 지적
+
+---
+
+## 4. 컨텍스트 유지 규칙 (최우선)
+
+> 대화 컨텍스트는 길어지면 소실된다. `docs/` 문서가 유일한 영속 기억이다.
+
+### 즉시 기록한다 (사용자 요청 없이)
+
+경로는 모두 `docs/` 기준이다.
+
+| 상황 | 기록 위치 |
+|------|----------|
+| 기술 결정이 내려짐 | `ADR/ADR-0NN-*.md` |
+| 기능 명세 추가·변경 | `기능 명세.md` |
+| 엔드포인트 추가·변경 | `API 명세.md` |
+| Entity/스키마 변경 | `DB 모델링.md` |
+| 에러 해결됨 | `트러블슈팅.md` |
+| 작업 단계 완료 | `개발 로그.md` |
+| "지금은 안 한다"고 결정 | `향후 과제.md` — **트리거를 반드시 함께 적는다** |
+| 아키텍처 변경 | `아키텍처.md` |
+| AI 활용 방식 변경 | `AI 활용 전략.md` |
+| TS·Node·NestJS 개념 설명을 한 뒤 | `학습 노트.md` — **기록할지 먼저 물어본다** |
+
+> `학습 노트.md`는 설계 문서가 아니라 사용자의 학습용이다. 예외적으로 규칙 밖에 둔다.
+> 질문 순서대로 덧붙이지 말고, **문서 전체를 훑어 관련 주제 아래에 통합**한다.
+
+**규칙**
+1. "나중에 정리하겠다"는 금지. 결정 즉시 파일에 쓴다.
+2. 기록 후 한 줄로만 알린다. 파일 내용을 대화에 반복 출력하지 않는다.
+3. 세션 시작 시 `CLAUDE.md` → `개발 로그.md` → 관련 문서 순으로 읽어 복원한다.
+4. 대화가 길어졌다고 판단되면 미기록 사항을 먼저 정리한다.
+
+> ADR 형식(배경/선택지/결정/이유/결과)과 진행 상태는 `docs/`에서 관리한다. 여기에 중복하지 않는다.
+
+---
+
+## 5. 개발 워크플로우
+
+> 각 시점이 오면 Claude가 **먼저 알리고** 진행한다. 사용자가 요청할 때까지 기다리지 않는다.
+> **확인 없이 코드부터 쓰지 않는다. `dev`에 직접 코드를 작성하지 않는다.**
+
+```
+① 이슈 → ② 브랜치 → ③ 커밋(반복) → ④ PR → ⑤ 정리
+```
+
+### ① 이슈 — 새 작업 단위 시작 직전
+
+코드 변경이 있는 모든 작업(`feat` `fix` `refactor` `design` `chore`)은 이슈를 만든다.
+
+**예외 — `dev`에 직접 커밋**: `docs/`, `CLAUDE.md`, `README`, `.github/` 메타 설정.
+기준은 *애플리케이션 코드에 영향이 없고 리뷰할 로직이 없는 변경*.
+
+> **문서를 `dev`에 직접 커밋하는 이유**: CI가 `pull_request`에만 걸려 있어
+> 문서만 고칠 때는 3분짜리 lint·build·E2E가 돌지 않는다.
+> PR로 올리면 md 한 줄에도 전체 검증이 실행된다.
+>
+> `paths-ignore`로 거르는 방법은 **필수 체크와 충돌**한다. → `향후 과제`
+
+> **설계 변경이 코드와 같은 PR에 들어가야 할 때는 함께 커밋한다.**
+> 예: `feat(pt)` 브랜치에서 `docs/ADR-014`를 함께 수정 →
+> PR 하나에 "무엇을 만들었는지"와 "왜 그렇게 만들었는지"가 같이 보인다.
+
+Claude가 제시할 형식:
+```
+📌 Issue    : 제목
+   Branch   : feat/xxx (from dev)
+   범위     : src/xxx/**
+   완료 조건 : [검증 가능한 조건]
+```
+
+> 이슈와 PR은 번호를 공유한다. 생성 후 실제 번호를 확인해 사용한다.
+
+### ② 브랜치 — 이슈 직후, 최신 `dev`에서 분기
+
+> **Claude는 코드를 작성하기 전 현재 브랜치를 확인한다.**
+> `dev`이거나 의도한 브랜치가 아니면 먼저 브랜치를 만들고 시작한다.
+> (실제로 `feat/auth`를 만들지 않고 `dev`에 4커밋을 쌓은 사고가 있었다)
+
+도메인/모듈 단위로 자른다. **한 이슈 = 한 브랜치 = 한 PR.**
+접두어: `feat/` `fix/` `refactor/` `chore/`(설정·공통 인프라) `design/`(Entity·스키마)
+
+### ③ 커밋 — 논리적으로 완결된 단위마다
+
+한 PR에 여러 커밋이 있는 것이 정상이다.
+- 파일 단위로 쪼개지 않는다. "Entity 4개 작성"이 한 커밋.
+- 성격이 다르면 나눈다. "Entity 작성"과 "타입 오류 수정"은 별개.
+- **빌드가 깨진 상태로 커밋하지 않는다.**
+
+**Conventional Commits 준수**
 ```
 <type>(<scope>): <subject>
 
-<body> (선택)
+<body>
 ```
+`feat` 새 기능 · `fix` 버그 · `refactor` 리팩토링 · `docs` 문서 · `test` 테스트 · `chore` 설정 · `design` DB·아키텍처 설계
 
-| type | 사용 시점 |
-|------|----------|
-| `feat` | 새 기능 |
-| `fix` | 버그 수정 |
-| `refactor` | 리팩토링 |
-| `docs` | 문서 수정 |
-| `test` | 테스트 추가/수정 |
-| `chore` | 설정, 패키지 등 |
-| `design` | DB 설계, 아키텍처 변경 |
+### ④ PR — 완료 조건을 모두 만족했을 때
 
-예시:
-```
-feat(auth): JWT Access/Refresh Token 발급 구현
+대상은 항상 `dev`. `.github/pull_request_template.md`가 자동 적용된다.
+본문 마지막에 `Closes #N`. 범위를 벗어난 변경이 섞였으면 올리지 말고 분리한다.
 
-- bcrypt 비밀번호 해싱
-- Refresh Token DB 저장 및 검증 로직
-- Access Token 만료 시 자동 재발급
-```
+**제목**도 Conventional Commits 형식을 따른다. 단, **개별 커밋 메시지를 복사하지 않는다.**
+PR은 여러 커밋의 묶음이므로 제목은 *브랜치 전체의 목적*을 나타내야 한다.
 
-### 브랜치 전략
 ```
-main        ← 최종 결과물
-dev         ← 개발 통합
-feat/기능명  ← 기능 단위 개발
+chore(common): 공통 응답 포맷 및 전역 예외 처리 구현
+feat(auth): JWT 인증 및 Auth API 구현
 ```
+`<scope>`는 브랜치의 도메인(`common` `auth` `gym` `user` `pt`)을 쓴다.
+
+### ⑤ 정리 — 머지 후
+
+`dev` pull → 로컬 브랜치 삭제 → **`docs/개발 로그.md` 진행 상태 갱신.**
 
 ---
 
-## 환경변수 (.env)
+## 6. 코딩 컨벤션
 
-```env
-# DB
-DB_HOST=localhost
-DB_PORT=5432
-DB_USERNAME=
-DB_PASSWORD=
-DB_DATABASE=gym_manager
+### 네이밍
+파일 `kebab-case` · 클래스 `PascalCase` · 변수/함수 `camelCase` · 상수 `UPPER_SNAKE_CASE` · DB 컬럼 `snake_case`
 
-# JWT
-JWT_ACCESS_SECRET=
-JWT_REFRESH_SECRET=
-JWT_ACCESS_EXPIRES_IN=15m
-JWT_REFRESH_EXPIRES_IN=7d
+### NestJS
+- DTO에 `class-validator` 데코레이터 필수
+- 공통 응답 포맷 `{ success, data, message }`
+- 예외는 내장 `HttpException` 또는 커스텀 Exception
+- 비즈니스 로직은 Service에만. Controller는 얇게.
+- 트랜잭션이 필요한 로직은 반드시 명시
+- **경로 파라미터로 UUID를 받으면 `ParseUUIDPipe`를 붙인다.**
+  형식 오류가 DB까지 내려가면 PostgreSQL `22P02`로 500이 된다. 형식 오류는 400이어야 한다.
 
-# App
-PORT=3000
-NODE_ENV=development
-```
+### TypeORM
+- `@CreateDateColumn`, `@UpdateDateColumn` 기본 포함. soft delete는 `@DeleteDateColumn`
+- N+1 방지를 위해 relation 로딩 전략 명시 (`eager` 지양, `relations` 옵션 또는 QueryBuilder)
+- **nullable 컬럼(`T | null`)에는 `type`을 반드시 명시한다.**
+  유니온 타입은 `design:type` 메타데이터에 `Object`로 기록되어 추론이 실패한다. → 트러블슈팅 003
 
----
-
-## 현재 진행 상태
-
-- [x] 프로젝트 초기 세팅
-- [x] 기능 명세 작성
-- [x] CLAUDE.md 작성
-- [ ] DB 모델링
-- [ ] 아키텍처 확정
-- [ ] Auth 모듈 구현
-- [ ] Users 모듈 구현
-- [ ] Memberships 모듈 구현
-- [ ] Attendance / QR 구현
-- [ ] Trainers / PT 모듈 구현
-- [ ] SSE 알림 구현
-- [ ] Stats API 구현
-- [ ] Swagger 문서화
-- [ ] 테스트 작성
-- [ ] CI/CD 파이프라인 구성
-- [ ] 배포
+### 보안
+- 비밀번호는 bcrypt. **Refresh Token은 SHA-256** (용도가 다름 → ADR-006)
+- 시크릿은 `.env`에서만 관리
+- Role Guard를 모든 엔드포인트에 명시적으로 적용
+- **클라이언트가 보낸 `gymId`·`userId`를 신뢰하지 않는다.** 토큰에서만 추출한다.
+- QR 토큰은 30초 만료 + `type` 필드 검증
