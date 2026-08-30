@@ -74,7 +74,7 @@ NestJS(TypeScript) · TypeORM · PostgreSQL · JWT · qrcode · Swagger · Docke
 ```
 src/
 ├── auth/  users/  gyms/  memberships/  attendance/
-├── trainers/  pt/  notifications/  stats/
+├── trainers/  pt/  stats/
 └── common/     # guards, decorators, interceptors, filters, enums
 ```
 
