@@ -40,12 +40,27 @@ const DURATION = /^\d+[smhd]$/;
  */
 const DAYS_ONLY = /^\d+d$/;
 
+/**
+ * 프론트가 붙기 전까지 필요한 오리진은 Vite dev 서버 하나뿐이다.
+ * 기본값을 두는 이유는 **없다고 앱이 못 뜰 이유가 없기 때문**이다.
+ * 시크릿과 달리 CORS는 틀려도 브라우저에서 즉시 드러난다.
+ */
+const DEFAULT_CORS_ORIGINS = 'http://localhost:5173';
+
 export const envValidationSchema = Joi.object({
   // 오타 하나로 synchronize가 조용히 켜지거나 꺼진다. → 아키텍처 7장
   NODE_ENV: Joi.string()
     .valid('development', 'test', 'production')
     .default('development'),
   PORT: Joi.number().port().default(3000),
+
+  /**
+   * 브라우저가 이 API를 부를 수 있는 오리진 목록. 콤마로 구분한다.
+   *
+   * 값을 코드에 박지 않는 이유는 개발·운영에서 달라지기 때문이다.
+   * 다만 시크릿이 아니므로 `.env.example`·`.env.test`에 실제 값을 적는다.
+   */
+  CORS_ORIGINS: Joi.string().default(DEFAULT_CORS_ORIGINS),
 
   DB_HOST: Joi.string().required(),
   DB_PORT: Joi.number().port().default(5432),
