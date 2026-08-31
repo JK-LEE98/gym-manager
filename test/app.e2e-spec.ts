@@ -41,6 +41,55 @@ describe('공통 인프라 (e2e)', () => {
     expect(typeof res.body.message).toBe('string');
   });
 
+  describe('CORS', () => {
+    // 브라우저 전용 동작이라 눈으로 확인하기 쉽지만, 눈으로 확인하는 것은
+    // 회귀를 못 잡는다. 설정이 조용히 빠져도 API 테스트는 전부 통과한다.
+    const ALLOWED = 'http://localhost:5173';
+    const ALLOWED_SECOND = 'http://localhost:4173';
+    const DISALLOWED = 'http://evil.example.com';
+
+    it('허용된 오리진의 프리플라이트에 Access-Control-Allow-Origin이 붙는다', async () => {
+      const res = await request(app.getHttpServer())
+        .options('/gyms/public')
+        .set('Origin', ALLOWED)
+        .set('Access-Control-Request-Method', 'GET')
+        .expect(204);
+
+      expect(res.headers['access-control-allow-origin']).toBe(ALLOWED);
+    });
+
+    it('콤마로 구분된 두 번째 오리진도 허용된다', async () => {
+      // 파싱이 첫 값만 읽고 끝나는 실수를 잡는다
+      const res = await request(app.getHttpServer())
+        .options('/gyms/public')
+        .set('Origin', ALLOWED_SECOND)
+        .set('Access-Control-Request-Method', 'GET')
+        .expect(204);
+
+      expect(res.headers['access-control-allow-origin']).toBe(ALLOWED_SECOND);
+    });
+
+    it('허용되지 않은 오리진에는 헤더가 붙지 않는다', async () => {
+      // 요청 자체는 성공한다. 브라우저가 헤더를 보고 응답을 막는 구조다
+      const res = await request(app.getHttpServer())
+        .get('/gyms/public')
+        .set('Origin', DISALLOWED)
+        .expect(200);
+
+      expect(res.headers['access-control-allow-origin']).toBeUndefined();
+    });
+
+    it('쿠키를 쓰지 않으므로 credentials는 허용하지 않는다', async () => {
+      // 켜는 순간 오리진이 넓어졌을 때 그대로 취약점이 된다
+      const res = await request(app.getHttpServer())
+        .get('/gyms/public')
+        .set('Origin', ALLOWED)
+        .expect(200);
+
+      expect(res.headers['access-control-allow-credentials']).toBeUndefined();
+    });
+  });
+
   it('@Public 라우트는 성공 응답이 공통 포맷으로 감싸진다', async () => {
     const res = await request(app.getHttpServer())
       .get('/gyms/public')
